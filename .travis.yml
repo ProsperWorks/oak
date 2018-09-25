@@ -1,0 +1,14 @@
+sudo: true
+language: ruby
+before_install:
+  - gem install bundler -v 1.16.1
+rvm:
+  - 2.1.6
+  - 2.2.9
+  - 2.4.3
+  - 2.5.0
+before_script:
+  - bundle exec rubocop --version
+script:
+  - bundle exec rubocop --display-cop-names --display-style-guide
+  - bundle exec rake test

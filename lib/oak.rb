@@ -6,6 +6,8 @@
 # author: jhw@prosperworks.com
 # incept: 2016-03-02
 
+require 'oak/version'
+
 # This code operates both in a Rails context and in a plain Ruby
 # context (see bin/oak.rb).
 #
