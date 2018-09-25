@@ -394,17 +394,15 @@ class OakTest < Minitest::Test
   # To keep the cost of this test low, we run it only over very, very
   # few inputs.. and we're happy with that.
   #
-  if false
-  [ 'foo', { 'bar' => ['baz','bang']} ].each_with_index do |obj,i|
-    ALL_OPTIONS.each_with_index do |opts,j|
-      test "all options check: #{[obj,i,opts,j]}" do
+  def test_all_options_check
+    [ 'foo', { 'bar' => ['baz','bang']} ].each_with_index do |obj,i|
+      ALL_OPTIONS.each_with_index do |opts,j|
         encode = OAK.encode(obj,opts)
         decode = OAK.decode(encode,key_chain: opts[:key_chain])
-        assert_equiv obj, decode
+        assert_equiv obj, decode, "#{[obj,i,opts,j]}"
       end
     end
   end
-  end # if false TODO
 
   # This test may be redundant with some of the loopy tests elsewhere,
   # but sometimes I need to narrow down on just this one case.
@@ -429,15 +427,13 @@ class OakTest < Minitest::Test
   # The secondary invariant: encode() will reject any objects which it
   # cannot serialize reversibly.
   #
-  if false # TODO
-  UNHAPPY_OBJECTS.each_with_index do |unhappy_obj,i|
-    test "unhappy: #{[i,unhappy_obj]}" do
-      assert_raises(OAK::CantTouchThisObjectError) do
+  def test_unhappy_objects
+    UNHAPPY_OBJECTS.each_with_index do |unhappy_obj,i|
+      assert_raises(OAK::CantTouchThisObjectError,"#{[i,unhappy_obj]}") do
         OAK.encode(unhappy_obj)
       end
     end
   end
-  end # if false # TODO
 
   # OAK._safety_dance is part of the private implementation of OAK,
   # but so much hinges on it that I am giving it special test
@@ -691,11 +687,9 @@ class OakTest < Minitest::Test
     ],
   }.each do |obj,oaks|
     oaks.each do |oak|
-      if false # TODO
-      test "oak remembers its commitment to #{oak}" do
+      define_method "test_oak_remembers_its_commitment_to_#{oak}" do
         assert_equiv obj, OAK.decode(oak, key_chain: KEY_CHAIN_A)
       end
-      end # if false # TODO
     end
   end
 
@@ -1483,14 +1477,12 @@ class OakTest < Minitest::Test
     'F4A3_1_2_3I1I2I3',                                      # bad LZMA sequence
     'F6H2_1_2_3_4YA3_foosU0sU0A10_5_5_5_5_5_5_5_5_5_5SU1_x', # bad LZMA sequence
   ].freeze
-  if false # TODO jhw
   SPECIFIC_MAGIC_LZMA_CORRUPTION.each do |corrupt|
-    test "SPECIFIC_MAGIC_OAK_CORRUPTION #{corrupt}" do
+    define_method "test_SPECIFIC_MAGIC_OAK_CORRUPTION_#{corrupt}" do
       assert_raises(RuntimeError) do
         LZMA.decompress(corrupt)
       end
     end
   end
-  end # if false TODO jhw
 
 end
