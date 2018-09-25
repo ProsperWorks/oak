@@ -311,10 +311,9 @@ class OakTest < Minitest::Test
   # Note that encode() is not universal: it does not support
   # user-defined classes and it only supports a few string encodings.
   #
-  if false
   HAPPY_OBJECTS.each_with_index do |(happy_name, happy_obj),i|
     INTERESTING_OPTIONS.each_with_index do |opts,j|
-      test "decode-vs-encode: #{[i,j,opts,happy_name]}" do
+      define_method "test_decode_vs_encode_#{[i,j,opts,happy_name]}" do
         encode        = OAK.encode(happy_obj,opts)
         #
         # encode() produces recognizable strings.
@@ -382,7 +381,6 @@ class OakTest < Minitest::Test
       end
     end
   end
-  end # if false TODO
 
   # Quick check of the prime invariant for a very simple few cases,
   # against the explosively large ALL_OPTIONS.
@@ -764,8 +762,7 @@ class OakTest < Minitest::Test
     '0123'                 => 123.0,
     '-0123'                => -123.0,
   }.each do |str,float|
-    if false # TODO
-    test "Thursday 2016-06-30 extreme #{str} #{float}" do
+    define_method "test_thursday_2016_06_30_extreme_#{str}_#{float}" do
       oak_s = "oak_3NNN_0_#{2+str.size}_F1F#{str}_ok" # size too small
       oak_b = "oak_3NNN_0_#{4+str.size}_F1F#{str}_ok" # size too big
       oak   = "oak_3NNN_0_#{3+str.size}_F1F#{str}_ok" # size just right
@@ -777,7 +774,6 @@ class OakTest < Minitest::Test
       end
       assert_equal float, OAK.decode(oak), "#{str} ==> #{oak}"
     end
-    end # if false # TODO
   end
 
   def testencryption_algo_is_new_each_time_to_prevent_state_bleed
