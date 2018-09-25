@@ -776,7 +776,7 @@ class OakTest < Minitest::Test
     end
   end
 
-  def testencryption_algo_is_new_each_time_to_prevent_state_bleed
+  def test_encryption_algo_is_new_each_time_to_prevent_state_bleed
     refute_equal OAK.encryption_algo.object_id, OAK.encryption_algo.object_id
   end
 
