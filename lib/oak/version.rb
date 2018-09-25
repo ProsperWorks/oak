@@ -1,3 +1,3 @@
-class OAK
+module OAK
   VERSION = '0.4.0'.freeze
 end
