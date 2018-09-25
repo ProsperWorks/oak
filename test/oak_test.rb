@@ -3,7 +3,6 @@ require 'test_helper'
 
 class OakTest < Minitest::Test
 
-  if false
   KEY_CHAIN_A = OAK::KeyChain.new(
     {
       'a'      => OAK::Key.new('1x3x5x7x9x1x3x5x7x9x1x3x5x7x9x1x'),
@@ -255,18 +254,18 @@ class OakTest < Minitest::Test
     {'x' => UnhappyType.new},        # hash with an unhappy object
     Time.now,                        # a Time object
   ].freeze
-  end # if false
 
-  if false
-  test "contract violations decode" do
+  def test_contract_violations_decode
     [
       nil, {}, [], -1, 0.5, Class, UnhappyType.new
     ].each do |not_a_string|
-      assert_raises_kind_of(ArgumentError) do
+      assert_raises(ArgumentError,not_a_string) do
         OAK.decode(not_a_string)
       end
     end
   end
+
+  if false
 
   # Unhappy options should all be rejected by encode() and wrap().
   #
@@ -279,6 +278,7 @@ class OakTest < Minitest::Test
       end
     end
   end
+
 
   # Some nasty surprises came up when testing OAK-for-Summaries in
   # prod in Escargot.
