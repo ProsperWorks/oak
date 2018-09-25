@@ -481,8 +481,7 @@ class OakTest < Minitest::Test
       [CYCLE_A],
     ],
   ].each_with_index do |(obj,expected_values,expected_reseen),idx|
-    if false # TODO
-    test "_safety_dance for #{idx}: #{obj}" do
+    define_method "test_safety_dance_for_#{idx}" do
       #
       # The keys of the output of OAK._safety_dance() are object_ids.
       #
@@ -497,7 +496,6 @@ class OakTest < Minitest::Test
       assert_equal expected_values, seen.values,     obj
       assert_equal expected_reseen, reseen,          obj
     end
-    end # if false # TODO
   end
 
   # Checks that a and b are structurally equivalent.  This is the main
@@ -1308,16 +1306,15 @@ class OakTest < Minitest::Test
     'oak_4a_B166_1gQ7f-h5FrDTVSwAVQ2FLaz4obu6FZO2C3YSAbaNroucz0DZfU7c59cVugFGQnR4Q9cXWNEr8FMaYUByvRJODF2glSy3Xcoo_eXkHGw6MhRrwuEVmxa7_d7LT_ijzOU1EFcMbvGy0LAlfcqR37hupVuE2tyygq7BISPx8g_ok',
   ].freeze
   DEFENSIVE_OAK_STRINGS.each do |defensive|
-    if false # TODO
 
-    test "DEFENSIVE_OAK_STRINGS decode happily #{defensive}" do
+    define_method "test_DEFENSIVE_OAK_STRINGS_decode_happily_#{defensive}" do
       objA = [1, 2, 3]
       objB = {:foo=>'foo','foo'=>['x']*10}
       got  = OAK.decode(defensive,key_chain: KEY_CHAIN_A)
       assert_includes [objA,objB], got
     end
 
-    test "DEFENSIVE_OAK_STRINGS 1-byte deletions are hard errors #{defensive}" do
+    define_method "test_DEFENSIVE_OAK_STRINGS_1_byte_deletions_are_hard_errors_#{defensive}" do
       defensive.size.times.each do |i|
         a         = defensive[0,i]                         # chars before pos i
         b         = defensive[i,1]                         # the 1 char at pos i
@@ -1333,7 +1330,7 @@ class OakTest < Minitest::Test
       end
     end
 
-    test "DEFENSIVE_OAK_STRINGS 1-byte dupes are hard errors #{defensive}" do
+    define_method "test_DEFENSIVE_OAK_STRINGS_1_byte_dupes_are_hard_errors_#{defensive}" do
       defensive.size.times.each do |i|
         a         = defensive[0,i]                         # chars before pos i
         b         = defensive[i,1]                         # the 1 char at pos i
@@ -1349,7 +1346,7 @@ class OakTest < Minitest::Test
       end
     end
 
-    test "DEFENSIVE_OAK_STRINGS 1-bit toggles are hard errors #{defensive}" do
+    define_method "test_DEFENSIVE_OAK_STRINGS_1_bit_toggles_are_hard_errors_#{defensive}" do
       #
       # All of our DEFENSIVE_OAK_STRINGS have format: :base64.
       #
@@ -1376,7 +1373,7 @@ class OakTest < Minitest::Test
       end
     end
 
-    test "DEFENSIVE_OAK_STRINGS 2-byte swaps are hard errors #{defensive}" do
+    define_method "test_DEFENSIVE_OAK_STRINGS_2_byte_swaps_are_hard_errors_#{defensive}" do
       defensive.size.times.each do |i|
         a         = defensive[0,i]                         # chars before pos i
         b         = defensive[i,1]                         # the 1 char at pos i
@@ -1402,7 +1399,6 @@ class OakTest < Minitest::Test
         end
       end
     end
-    end # if false # TODO
 
   end
 
