@@ -33,7 +33,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'bzip2-ffi',   '~> 1.0.0'
   spec.add_runtime_dependency 'contracts',   '~> 0.16.0'
   spec.add_runtime_dependency 'lz4-ruby',    '~> 0.3.3'
-  spec.add_runtime_dependency 'ruby-lzma',   '~> 0.4.3'
   spec.add_runtime_dependency 'optimist',    '~> 3.0.0'
+  spec.add_runtime_dependency 'ruby-lzma',   '~> 0.4.3'
   spec.add_runtime_dependency 'rubydoctest', '~> 1.1.5'
 end

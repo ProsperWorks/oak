@@ -15,7 +15,7 @@ require          'optimist'
 OLD_ARGV = ARGV.dup            # ARGV is consumed by Optimist but we use later.
 OPTS     = Optimist.options do
   banner "#{$0} cli driver for OAK"
-  banner <<-EOS
+  banner <<-OPTIMIST_EXAMPLES
 Examples:
   $ echo hello | bin/oak.rb
   oak_3CNB_1944283675_15_RjFTVTVfaGVsbG8_ok
@@ -31,7 +31,7 @@ Examples:
   $ (echo hello ; echo world) | bin/oak.rb | bin/oak.rb --mode decode-lines
   hello
   world
-EOS
+OPTIMIST_EXAMPLES
   banner "Options:"
   opt :redundancy,   'redundancy',                   :default => 'crc32'
   opt :format,       'format',                       :default => 'base64'
@@ -181,7 +181,12 @@ if __FILE__ == $0
         dag_a,
         [1,-123,0.12,-0.123,Float::NAN,-Float::INFINITY,3.14159265358979],
       ].each do |obj|
-        oak = OAK.encode(obj,redundancy: :crc32, format: :none, compression: :none)
+        oak = OAK.encode(
+          obj,
+          redundancy:  :crc32,
+          format:      :none,
+          compression: :none,
+        )
         puts ""
         puts "obj:   #{obj}"
         puts "  oak: #{oak}"
@@ -211,14 +216,14 @@ if __FILE__ == $0
           { 'l0ng3r' => OAK::Key.new('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') }
         )
         [
-          {redundancy: :none,  format: :none,   compression: :none},
-          {redundancy: :none,  format: :base64, compression: :lz4,   force: true},
-          {redundancy: :crc32, format: :base64, compression: :zlib,  force: true},
-          {redundancy: :crc32, format: :base64, compression: :bzip2, force: true},
-          {redundancy: :sha1,  format: :base64, compression: :lzma,  force: true},
-          {key_chain: key_chain, force_oak_4: true, format: :none,              },
-          {key_chain: key_chain, force_oak_4: true,                             },
-          {key_chain: key_chain, key: 'l0ng3r',                                 },
+          {redundancy: :none, format: :none,  compression: :none             },
+          {redundancy: :none, format: :base64,compression: :lz4,  force: true},
+          {redundancy: :crc32,format: :base64,compression: :zlib, force: true},
+          {redundancy: :crc32,format: :base64,compression: :bzip2,force: true},
+          {redundancy: :sha1, format: :base64,compression: :lzma, force: true},
+          {key_chain: key_chain,force_oak_4: true,format: :none,             },
+          {key_chain: key_chain,force_oak_4: true,                           },
+          {key_chain: key_chain,key: 'l0ng3r',                               },
         ].each do |opts|
           oak = OAK.encode(obj,opts)
           puts "      '#{oak}',"

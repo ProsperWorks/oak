@@ -85,9 +85,10 @@ class OakTest < Minitest::Test
 
   # CYCLE_A and CYCLE_B are nodes in a cycle A => B, B => A.
   #
-  CYCLE_A    = ['cycle_a','TBD']         # rubocop:disable Style/MutableConstant
+  CYCLE_A    = ['cycle_a','TBD']
   CYCLE_B    = ['cycle_b',CYCLE_A].freeze
-  CYCLE_A[1] = CYCLE_B
+  CYCLE_A[1] = CYCLE_B                     # cycles impossible without mutation
+  CYCLE_A    = CYCLE_A.freeze
 
   # DAG_A, DAG_B, and DAG_C are nodes in a directed acyclic graph A =>
   # B, A => C, B = C.
@@ -298,14 +299,14 @@ class OakTest < Minitest::Test
   # decode() is the inverse of encode() i.e. for all happy obj and all
   # happy opts we expect the identity:
   #
-  #   decode(encode(obj,opts))                       == obj
+  #   decode(encode(obj,opts))                        == obj
   #
   # Out of extreme paranoia, which mathematically may be redundant, we
   # also test the prime invariant over the domain of outputs of
   # encode() i.e. the identities:
   #
-  #   decode(encode(encode(obj,opts),optsB))         == encode(obj,opts)
-  #   decode(decode(encode(encode(obj,opts),optsB))) == obj
+  #   decode(encode(encode(obj,opts),opts_b))         == encode(obj,opts)
+  #   decode(decode(encode(encode(obj,opts),opts_b))) == obj
   #
   # Note that encode() is not universal: it does not support
   # user-defined classes and it only supports a few string encodings.
@@ -373,10 +374,10 @@ class OakTest < Minitest::Test
         # OAK failed to transcode some more complicated OAK strings
         # due to regexp bugs.
         #
-        INTERESTING_OPTIONS.each do |optsB|
-          encode2 = OAK.encode(encode,optsB)
-          decode2 = OAK.decode(encode2,key_chain: optsB[:key_chain])
-          assert_equiv encode, decode2, "#{optsB}"
+        INTERESTING_OPTIONS.each do |opts_b|
+          encode2 = OAK.encode(encode,opts_b)
+          decode2 = OAK.decode(encode2,key_chain: opts_b[:key_chain])
+          assert_equiv encode, decode2, "#{opts_b}"
         end
       end
     end
@@ -407,7 +408,7 @@ class OakTest < Minitest::Test
   # This test may be redundant with some of the loopy tests elsewhere,
   # but sometimes I need to narrow down on just this one case.
   #
-  def test_standalone_frizzy_handles_DAG
+  def test_standalone_frizzy_handles_dag
     opts   = {redundancy: :none, format: :none, compression: :none}
     encode = OAK.encode(DAG_A,opts)
     decode = OAK.decode(encode)
@@ -633,6 +634,9 @@ class OakTest < Minitest::Test
   # dedicated sources.
   #
   {
+    #
+    # Lots of OAK literals are more than 80 characters.
+    #
     [1, 2, 3] => [
       'oak_3NNN_0_16_F4A3_1_2_3I1I2I3_ok',
       'oak_3N4B_0_26_EPABRjRBM18xXzJfM0kxSTJJMw_ok',
@@ -702,7 +706,10 @@ class OakTest < Minitest::Test
   #
   # This test repros that failure, with the precise data in question.
   #
-  def test_Thursday_2016_06_30_decode_failure
+  def test_thursday_2016_06_30_decode_failure
+    #
+    # Lots of OAK literals are more than 80 characters.
+    #
     oak = 'oak_3SBB_99283e99d2338e8e956c60caa8b72258ad68c933_1679_QlpoOTFBWSZTWVjZkAUAAhkfgEALf_A14QoAv-_f8FAFp7tAK3nHhG566BXUNNENASabSNU9QaMhmo0GgingYqo0ABoaAAAA0xIAhU9QaA0AAABIkmTRqJoA9NRoPUNDQDCREFNoTUeiT01BoNAA09S8fD7ff0_Kt695CUoQgmwG_Ox5A5_HhyGdwq-PAVinUMwYXNMLZewT5kVMyZC3alFpHV4wd7uBeKWCBj46JwhTBLYPKgizoEVkR1iKAVgXEeTVTcVQgWlONiziPXf1O1oq2WIpAw5UkoXMsfEoL3MfptHXWkNoRETgie0DZkAw6xAqFJILnQNhpWbYGRlzMBYikuY8Sfg1WZrOgyBS5GZ4rWbzOrT0uRzmDtuL45xc0QSyVzASqlhwGydwNNkk0Wt84yqYyubiZzO882N4CIJRFSSe1NQJnuSykYJ0VxASulsV4nd9uvVKW4xXhQLY5zHWqaaNZxW5M64mZSSSxAbaRJO0sAJ0WL2xOaVrxa2eNa43okGQr3kYBphKOzbgIGEELJdJPCb2E7kaZgJPJHFd01ilJdLc85e92i-iUSqVs08qgBsZOoBgYNiJtatFdzaNpTlKdL0tUUuoCpmwqKuyBkKYOhFjRAUB06jF-KbXVK9bWtYxfPG6EEEulWMIXJM5REFHRmg7wjFqA8EVaMO7JYcGBNYMNF2sWsYWoY7FOkqlbBJ1nTNLRmiEDS1sgBNDGhNLEM7ZSOF9rrWgpuvN9IwRjdsBk62ndGMjT28fJ15dHJxwcMHYKPp0WRhLSPHlGSUVdt8ttxJsLOe_SXseazjiLtzbBTqUHKbZgyECW7OOPcANiEJRE3tIYbF7WkBktKPRusUkSZu7u8qEKzRekZyehlwiTRIMpJKr0xSGcAHGOjZmO-ZAxQkpQGODJJJN1TDLaBDXcLIQZjQATyWpwyFrIGSLzRgq0VWDbB4aA6rRLGlw8FzFO5m7d7lCqlIqAi0QLjHgc2VW1JLb74G233_dL4y2jO_NOAdbjhEFaWpzeScwjkDsNdpU2OVg2tKFU0ysNM1F821ltyrHFhUcmjCANIVKVNNoQCx1Zm0i6Xno7yoRJ8jAIdmq19dPURqTMQ7xkGKcHVKCBQYcNW_9CEKYsA20DlYfXo7ASSNQdoeV8Jpk8Zbt2D09DEBi49gkGkR5mkDGCgoMbghLkW0YXqHcWvwKBrfIJQpssnxio7lmf6XXiPcZCHayU2DRFoOWEOlJFCiKawMtzpxOxwFVE0cj1J2DL_TJyMsZKR9ttHcSX0CFNMeY1kN4qOFVKgzA6wyhg1_MHqO8AY4ME6WDkGaql3sLBxLLARuFbgchV_JgoXpYLIUneT7QwTXWjjwBlyoUOdTnm8xjzDmsU8a0kIOGd8qBkqlrhBAHqiqFIrwKbeeLUBeF0KQ6pGKkHVRQoPAOcxwFCQvXINN9TuHjbuLnK2oKE4yzR7uG3QsLS-EjbxG7JDCD4G5otwZukMRvNDcaIDUnFs2rhRUAIq6T_3vlrDIoK1WigokB5-nb0FOXwpHv3704mNWlaUVRoqh1pqjjx2EdH5FAleA7Aqi4NvkSLmHQcJqZiSjKoqk6SA0YXBZpsVaQ1RK8nlUljTpUmtzUYqBKCp7ApTUXZ1XAYF2SBYEjXm23Vwk0MZIOIu5IpwoSCxsyAKA_ok'
     OAK.decode(oak)
   end
@@ -773,11 +780,11 @@ class OakTest < Minitest::Test
     end # if false # TODO
   end
 
-  def test_OAK_encryption_algo_is_new_each_time_to_prevent_state_bleed
+  def testencryption_algo_is_new_each_time_to_prevent_state_bleed
     refute_equal OAK.encryption_algo.object_id, OAK.encryption_algo.object_id
   end
 
-  def test_OAK_random_key_and_OAK_random_iv_are_very_random
+  def test_random_key_and_random_iv_are_very_random
     #
     # OAK.random_key and OAK.random_iv expected to approach
     # cryptographical security.
@@ -785,23 +792,23 @@ class OakTest < Minitest::Test
     # Thus, it is a small thing to ask that collisions reliably do not
     # happen even among a draw of 1000s of these.
     #
-    keys = 1000.times.map { OAK.random_key }
+    keys = Array.new(1000) { OAK.random_key }
     assert_equal keys,       keys.uniq
     assert_equal [ String ], keys.map(&:class).uniq
-    assert_equal [ 32     ], keys.map(&:size).uniq # AES-256     has 256-bit keys
-    ivs  = 1000.times.map { OAK.random_iv  }
+    assert_equal [ 32     ], keys.map(&:size).uniq # AES-256     256-bit keys
+    ivs  = Array.new(1000) { OAK.random_iv  }
     assert_equal ivs,  ivs.uniq
     assert_equal [ String ], ivs.map(&:class).uniq
-    assert_equal [ 12     ], ivs.map(&:size).uniq  # AES-256-GCM has  96-bit ivs
+    assert_equal [ 12     ], ivs.map(&:size).uniq  # AES-256-GCM  96-bit ivs
   end
 
-  def test_OAK_Key_inspect_is_printable
+  def test_key_inspect_is_printable
     k    = OAK.random_key
     key  = OAK::Key.new(k)
     ["#{key}", "#{[key]}"] # literals in void context test for crash
   end
 
-  def test_OAK_Key_inspect_obfuscates_the_sensitive_key
+  def test_key_inspect_obfuscates_the_sensitive_key
     k    = OAK.random_key
     key  = OAK::Key.new(k)
     assert_equal    k,           key.key
@@ -814,7 +821,7 @@ class OakTest < Minitest::Test
     refute_includes "#{[key]}",  key.key.inspect
   end
 
-  def test_OAK_Key_initialize_demands_valid_values
+  def test_key_initialize_demands_valid_values
     #
     # unhappy some are non-strings or empty or will offend OpenSSL::Cipher
     #
@@ -838,7 +845,7 @@ class OakTest < Minitest::Test
     end
   end
 
-  def test_OAK_KeyChain_initialize_demands_valid_values
+  def test_keychain_initialize_demands_valid_values
     k1   = OAK.random_key
     k2   = OAK.random_key
     key1 = OAK::Key.new(k1)
@@ -901,7 +908,7 @@ class OakTest < Minitest::Test
     end
   end
 
-  def test_OAK_KeyChain_is_to_s_and_inspectable
+  def test_keychain_is_to_s_and_inspectable
     k1    = OAK.random_key
     k2    = OAK.random_key
     key1  = OAK::Key.new(k1)
@@ -935,7 +942,7 @@ class OakTest < Minitest::Test
     end
   end
 
-  def test_OAK_4_Hello_World
+  def test_oak_4_hello_world
     #
     # Life is much simpler without encryption.
     #
@@ -987,7 +994,7 @@ class OakTest < Minitest::Test
     #
     # With no debug_iv specified, OAK_4 uses a different IV each time.
     #
-    free_actual  = 1000.times.map do
+    free_actual  = Array.new(1000) do
       OAK.encode(
         plaintext,
         key_chain: key_chain,
@@ -1002,7 +1009,7 @@ class OakTest < Minitest::Test
     assert_equal [ plaintext ], free_reverse.uniq
   end
 
-  def test_properties_of_encrypted_OAK_strings
+  def test_properties_of_encrypted_oak_strings
     key_chain = OAK::KeyChain.new(
       {
         'x' => OAK::Key.new('12345678901234567890123456789012'),
@@ -1083,33 +1090,33 @@ class OakTest < Minitest::Test
     # includes the key name so using the same key+iv with 2 different
     # names still leads to 2 distinct encodings.
     #
-    gotY    = OAK.encode(
+    got_y   = OAK.encode(
       'Hello!',
       key_chain: key_chain,
       key:       'y',
       debug_iv:  '1234567890ab',
     )
-    gotZ    = OAK.encode(
+    got_z   = OAK.encode(
       'Hello!',
       key_chain: key_chain,
       key:       'z',
       debug_iv:  '1234567890ab',
     )
-    expectY = 'oak_4y_B71_MTIzNDU2Nzg5MGFiuHMLh8whh6KjGn5DUEiEg6aODYnDQoLbFmyc302I_SdHzQvqIfmgrxs_ok'
-    expectZ = 'oak_4z_B71_MTIzNDU2Nzg5MGFiU342iM2a5ZMbsfbJIw6ww6aODYnDQoLbFmyc302I_SdHzQvqIfmgrxs_ok'
+    expect_y = 'oak_4y_B71_MTIzNDU2Nzg5MGFiuHMLh8whh6KjGn5DUEiEg6aODYnDQoLbFmyc302I_SdHzQvqIfmgrxs_ok'
+    expect_z = 'oak_4z_B71_MTIzNDU2Nzg5MGFiU342iM2a5ZMbsfbJIw6ww6aODYnDQoLbFmyc302I_SdHzQvqIfmgrxs_ok'
     assert_equal key_chain.keys['y'].key, key_chain.keys['z'].key
-    assert_equal expectY,                 gotY
-    assert_equal expectZ,                 gotZ
+    assert_equal expect_y,                got_y
+    assert_equal expect_z,                got_z
     #
     # When IVs are not specified, they are random.  Encrypted OAK
     # strings are nondeterministic with extraordinarily low chance of
     # collision.
     #
-    oaks = 1000.times.map { OAK.encode('Hi!',key_chain: key_chain,key: 'z') }
+    oaks = Array.new(1000) { OAK.encode('Hi!',key_chain: key_chain,key: 'z') }
     assert_equal oaks, oaks.uniq
   end
 
-  def test_reversibility_of_encrypted_OAK_strings
+  def test_reversibility_of_encrypted_oak_strings
     plain     = 'Hello!'
     key_chain = OAK::KeyChain.new(
       {
@@ -1307,14 +1314,14 @@ class OakTest < Minitest::Test
   ].freeze
   DEFENSIVE_OAK_STRINGS.each do |defensive|
 
-    define_method "test_DEFENSIVE_OAK_STRINGS_decode_happily_#{defensive}" do
-      objA = [1, 2, 3]
-      objB = {:foo=>'foo','foo'=>['x']*10}
-      got  = OAK.decode(defensive,key_chain: KEY_CHAIN_A)
-      assert_includes [objA,objB], got
+    define_method "test_DEFENSIVE_decode_happily_#{defensive}" do
+      obj_a = [1, 2, 3]
+      obj_b = {:foo=>'foo','foo'=>['x']*10}
+      got   = OAK.decode(defensive,key_chain: KEY_CHAIN_A)
+      assert_includes [obj_a,obj_b], got
     end
 
-    define_method "test_DEFENSIVE_OAK_STRINGS_1_byte_deletions_are_hard_errors_#{defensive}" do
+    define_method "test_DEFENSIVE_1_byte_dels_are_hard_errors_#{defensive}" do
       defensive.size.times.each do |i|
         a         = defensive[0,i]                         # chars before pos i
         b         = defensive[i,1]                         # the 1 char at pos i
@@ -1330,7 +1337,7 @@ class OakTest < Minitest::Test
       end
     end
 
-    define_method "test_DEFENSIVE_OAK_STRINGS_1_byte_dupes_are_hard_errors_#{defensive}" do
+    define_method "test_DEFENSIVE_1_byte_dupes_are_hard_errors_#{defensive}" do
       defensive.size.times.each do |i|
         a         = defensive[0,i]                         # chars before pos i
         b         = defensive[i,1]                         # the 1 char at pos i
@@ -1346,7 +1353,7 @@ class OakTest < Minitest::Test
       end
     end
 
-    define_method "test_DEFENSIVE_OAK_STRINGS_1_bit_toggles_are_hard_errors_#{defensive}" do
+    define_method "test_DEFENSIVE_1_bit_toggles_are_hard_errors_#{defensive}" do
       #
       # All of our DEFENSIVE_OAK_STRINGS have format: :base64.
       #
@@ -1364,7 +1371,7 @@ class OakTest < Minitest::Test
         assert_equal   1,                b.size,       msg # confirm partition
         test_bits = ('_ok' == c) ? always_bits : (usually_bits + always_bits)
         test_bits.each do |bit|
-          corrupt = a + (b.ord ^ bit).chr + c              # b has a bit toggled!
+          corrupt = a + (b.ord ^ bit).chr + c              # b has bit toggled!
           assert_equal defensive.size,   corrupt.size, msg + " bit=#{bit}"
           assert_raises(OAK::CantTouchThisStringError,msg + " bit=#{bit}") do
             OAK.decode(corrupt,key_chain: KEY_CHAIN_A)
@@ -1373,7 +1380,7 @@ class OakTest < Minitest::Test
       end
     end
 
-    define_method "test_DEFENSIVE_OAK_STRINGS_2_byte_swaps_are_hard_errors_#{defensive}" do
+    define_method "test_DEFENSIVE_2_byte_swaps_are_hard_errors_#{defensive}" do
       defensive.size.times.each do |i|
         a         = defensive[0,i]                         # chars before pos i
         b         = defensive[i,1]                         # the 1 char at pos i

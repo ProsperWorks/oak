@@ -11,7 +11,7 @@ require          'optimist'           # good news: to be renamed 'optimist' soon
 
 OPTS        = Optimist.options do
   banner "#{$0} cli driver for wrapping secrets with OAK encryption"
-  banner <<-EOS
+  banner <<-OPTIMIST_EXAMPLES
 
   Limited, but safe CLI driver for OAK.  Focused on wrapping secrets.
 
@@ -37,7 +37,7 @@ Examples:
   Hello
   $ echo Hello | bin/enigma.rb --encrypt | env ENIGMA_KEYS=bar,foo bin/enigma.rb --recrypt
   oak_4bar_B59_DdFn7X3SfK5bC0tUtSGfSuFJq2E7V7ryhhoDKotjTEuVOPuqrb7cy-dRboU_ok
-EOS
+OPTIMIST_EXAMPLES
   banner ""
   banner "Options:"
   banner ""

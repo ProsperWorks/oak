@@ -684,17 +684,6 @@ module OAK
   #
   Contract String => Any
   def self._deserialize(str)
-    #
-    # We disable the rubocop Style/AndOr here.  We very much intend to
-    # use 'or' here.  The pattern we use here is precisely the reason
-    # why 'or' was invented.
-    #
-    # Furthermore, there is a bug in Rubocop in this case: if we were
-    # to change these 'or' to '||' we would be introducing a syntax
-    # error!  Ref: https://github.com/bbatsov/rubocop/issues/2375
-    #
-    # rubocop:disable Style/AndOr
-    #
     scanner      = StringScanner.new(str)
     serial_code  = scanner.scan(/F/)
     if 'F' != serial_code
@@ -838,9 +827,6 @@ module OAK
     # Thus, we return the first element of the rectified list.
     #
     rectified.first
-    #
-    # rubocop:enable Style/AndOr
-    #
   end
 
   ##########################################################################
@@ -981,7 +967,12 @@ module OAK
     plaintext               << _check(redundancy,str)          # source check
     plaintext               << '_'
     plaintext               << compressed
-    encrypted                = _encrypt(encryption_key,plaintext,header,debug_iv)
+    encrypted                = _encrypt(
+      encryption_key,
+      plaintext,
+      header,
+      debug_iv
+    )
     formatted                = _format(format,encrypted)
     output                   = header
     output                  << '%d' % formatted.size           # formatted size
@@ -1007,17 +998,6 @@ module OAK
   #
   Contract String, Maybe[Hash] => String
   def self._unwrap(str,opts={})
-    #
-    # We disable the rubocop Style/AndOr here.  We very much intend to
-    # use 'or' here.  The pattern we use here is precisely the reason
-    # why 'or' was invented.
-    #
-    # Furthermore, there is a bug in Rubocop in this case: if we were
-    # to change these 'or' to '||' we would be introducing a syntax
-    # error!  Ref: https://github.com/bbatsov/rubocop/issues/2375
-    #
-    # rubocop:disable Style/AndOr
-    #
     str         = str.b                   # str.b for dup to ASCII_8BIT
     sc          = StringScanner.new(str)
     ov          = sc.scan(/oak_[34]/)  or raise BAD_STR, "bad oak+ver"
@@ -1026,15 +1006,9 @@ module OAK
     else
       _unwrap_oak_3(sc)      # no opts for decoding OAK_3 :)
     end
-    #
-    # rubocop:enable Style/AndOr
-    #
   end
 
   def self._unwrap_oak_3(sc)
-    #
-    # rubocop:disable Style/AndOr
-    #
     r           = sc.scan(/[NCS]/)     or raise BAD_STR, "bad redundancy"
     c           = sc.scan(/[N4ZBM]/)   or raise BAD_STR, "bad compression"
     f           = sc.scan(/[NB]/)      or raise BAD_STR, "bad format"
@@ -1065,15 +1039,9 @@ module OAK
       raise CantTouchThisStringError, "scheck #{scheck} vs #{scheck_re}"
     end
     original
-    #
-    # rubocop:enable Style/AndOr
-    #
   end
 
   def self._unwrap_oak_4(sc,opts={})
-    #
-    # rubocop:disable Style/AndOr
-    #
     key            = sc.scan(/[^_]+/)     # nil OK, indicates no compression
     encryption_key = nil
     if key
@@ -1114,12 +1082,12 @@ module OAK
     original       = _decompress(compression,compressed)
     scheck_re      = _check(redundancy,original)
     if scheck != scheck_re
-      raise CantTouchThisStringError, "scheck #{scheck} vs #{scheck_re} in #{sc.string}"
+      raise(
+        CantTouchThisStringError,
+        "scheck #{scheck} vs #{scheck_re} in #{sc.string}"
+      )
     end
     original
-    #
-    # rubocop:enable Style/AndOr
-    #
   end
 
   # How we encode object type.
