@@ -255,30 +255,29 @@ class OakTest < Minitest::Test
     Time.now,                        # a Time object
   ].freeze
 
+  # Non-strings options should all be rejected by decode().
+  #
   def test_contract_violations_decode
     [
       nil, {}, [], -1, 0.5, Class, UnhappyType.new
     ].each do |not_a_string|
-      assert_raises(ArgumentError,not_a_string) do
+      assert_raises(ArgumentError,"#{not_a_string}") do
         OAK.decode(not_a_string)
       end
     end
   end
 
-  if false
-
-  # Unhappy options should all be rejected by encode() and wrap().
+  # Unhappy options should all be rejected by encode().
   #
-  OPTION_NAMES.each do |option_name|
-    [ :invalid_symbol, 'invalid_string' ].each do |unhappy_value|
-      test "contract violations for #{option_name} => #{unhappy_value}" do
-        assert_raises_kind_of(ArgumentError) do
+  def test_contract_violations_encode
+    OPTION_NAMES.each do |option_name|
+      [ :invalid_symbol, 'invalid_string' ].each do |unhappy_value|
+        assert_raises(ArgumentError,"#{option_name} => #{unhappy_value}") do
           OAK.encode('',{ option_name => unhappy_value })
         end
       end
     end
   end
-
 
   # Some nasty surprises came up when testing OAK-for-Summaries in
   # prod in Escargot.
@@ -287,7 +286,7 @@ class OakTest < Minitest::Test
   # missed by the seemingly exhaustive tests performed before
   # Escargot.
   #
-  test "cry about it" do
+  def test_cry_about_it
     s = "@-mentions: @⸨12:345:Some Person⸩"
     assert_equal Encoding::UTF_8, s.encoding
     assert_equal s, OAK.decode(OAK.encode(s,serial: :json)),   'json'
@@ -311,6 +310,7 @@ class OakTest < Minitest::Test
   # Note that encode() is not universal: it does not support
   # user-defined classes and it only supports a few string encodings.
   #
+  if false
   HAPPY_OBJECTS.each_with_index do |(happy_name, happy_obj),i|
     INTERESTING_OPTIONS.each_with_index do |opts,j|
       test "decode-vs-encode: #{[i,j,opts,happy_name]}" do
@@ -363,7 +363,7 @@ class OakTest < Minitest::Test
         if !opts[:key] || opts[:debug_iv]
           assert_equal     encode, encode2
         else
-          assert_not_equal encode, encode2
+          refute_equal     encode, encode2
         end
         #
         # Extreme paranoia: we can reversibly serialize the output
@@ -381,6 +381,7 @@ class OakTest < Minitest::Test
       end
     end
   end
+  end # if false TODO
 
   # Quick check of the prime invariant for a very simple few cases,
   # against the explosively large ALL_OPTIONS.
@@ -393,6 +394,7 @@ class OakTest < Minitest::Test
   # To keep the cost of this test low, we run it only over very, very
   # few inputs.. and we're happy with that.
   #
+  if false
   [ 'foo', { 'bar' => ['baz','bang']} ].each_with_index do |obj,i|
     ALL_OPTIONS.each_with_index do |opts,j|
       test "all options check: #{[obj,i,opts,j]}" do
@@ -402,11 +404,12 @@ class OakTest < Minitest::Test
       end
     end
   end
+  end # if false TODO
 
   # This test may be redundant with some of the loopy tests elsewhere,
   # but sometimes I need to narrow down on just this one case.
   #
-  test "standalone: frizzy handles DAG" do
+  def test_standalone_frizzy_handles_DAG
     opts   = {redundancy: :none, format: :none, compression: :none}
     encode = OAK.encode(DAG_A,opts)
     decode = OAK.decode(encode)
@@ -416,7 +419,7 @@ class OakTest < Minitest::Test
   # This test may be redundant with some of the loopy tests elsewhere,
   # but sometimes I need to narrow down on just this one case.
   #
-  test "standalone: frizzy handles cycles" do
+  def test_standalone_frizzy_handles_cycles
     opts   = {redundancy: :none, format: :none, compression: :none}
     encode = OAK.encode(CYCLE_A,opts)
     decode = OAK.decode(encode)
@@ -426,6 +429,7 @@ class OakTest < Minitest::Test
   # The secondary invariant: encode() will reject any objects which it
   # cannot serialize reversibly.
   #
+  if false # TODO
   UNHAPPY_OBJECTS.each_with_index do |unhappy_obj,i|
     test "unhappy: #{[i,unhappy_obj]}" do
       assert_raises(OAK::CantTouchThisObjectError) do
@@ -433,6 +437,7 @@ class OakTest < Minitest::Test
       end
     end
   end
+  end # if false # TODO
 
   # OAK._safety_dance is part of the private implementation of OAK,
   # but so much hinges on it that I am giving it special test
@@ -480,6 +485,7 @@ class OakTest < Minitest::Test
       [CYCLE_A],
     ],
   ].each_with_index do |(obj,expected_values,expected_reseen),idx|
+    if false # TODO
     test "_safety_dance for #{idx}: #{obj}" do
       #
       # The keys of the output of OAK._safety_dance() are object_ids.
@@ -495,6 +501,7 @@ class OakTest < Minitest::Test
       assert_equal expected_values, seen.values,     obj
       assert_equal expected_reseen, reseen,          obj
     end
+    end # if false # TODO
   end
 
   # Checks that a and b are structurally equivalent.  This is the main
@@ -561,7 +568,7 @@ class OakTest < Minitest::Test
     end
   end
 
-  test "equiv? and assert_equiv" do
+  def test_equiv?
     x = 'x' # a conveniently reusable, re-referencable object
     [
       [ nil,             nil                   ], # one single object_id
@@ -684,9 +691,11 @@ class OakTest < Minitest::Test
     ],
   }.each do |obj,oaks|
     oaks.each do |oak|
+      if false # TODO
       test "oak remembers its commitment to #{oak}" do
         assert_equiv obj, OAK.decode(oak, key_chain: KEY_CHAIN_A)
       end
+      end # if false # TODO
     end
   end
 
@@ -701,7 +710,7 @@ class OakTest < Minitest::Test
   #
   # This test repros that failure, with the precise data in question.
   #
-  test "Thursday 2016-06-30 decode failure" do
+  def test_Thursday_2016_06_30_decode_failure
     oak = 'oak_3SBB_99283e99d2338e8e956c60caa8b72258ad68c933_1679_QlpoOTFBWSZTWVjZkAUAAhkfgEALf_A14QoAv-_f8FAFp7tAK3nHhG566BXUNNENASabSNU9QaMhmo0GgingYqo0ABoaAAAA0xIAhU9QaA0AAABIkmTRqJoA9NRoPUNDQDCREFNoTUeiT01BoNAA09S8fD7ff0_Kt695CUoQgmwG_Ox5A5_HhyGdwq-PAVinUMwYXNMLZewT5kVMyZC3alFpHV4wd7uBeKWCBj46JwhTBLYPKgizoEVkR1iKAVgXEeTVTcVQgWlONiziPXf1O1oq2WIpAw5UkoXMsfEoL3MfptHXWkNoRETgie0DZkAw6xAqFJILnQNhpWbYGRlzMBYikuY8Sfg1WZrOgyBS5GZ4rWbzOrT0uRzmDtuL45xc0QSyVzASqlhwGydwNNkk0Wt84yqYyubiZzO882N4CIJRFSSe1NQJnuSykYJ0VxASulsV4nd9uvVKW4xXhQLY5zHWqaaNZxW5M64mZSSSxAbaRJO0sAJ0WL2xOaVrxa2eNa43okGQr3kYBphKOzbgIGEELJdJPCb2E7kaZgJPJHFd01ilJdLc85e92i-iUSqVs08qgBsZOoBgYNiJtatFdzaNpTlKdL0tUUuoCpmwqKuyBkKYOhFjRAUB06jF-KbXVK9bWtYxfPG6EEEulWMIXJM5REFHRmg7wjFqA8EVaMO7JYcGBNYMNF2sWsYWoY7FOkqlbBJ1nTNLRmiEDS1sgBNDGhNLEM7ZSOF9rrWgpuvN9IwRjdsBk62ndGMjT28fJ15dHJxwcMHYKPp0WRhLSPHlGSUVdt8ttxJsLOe_SXseazjiLtzbBTqUHKbZgyECW7OOPcANiEJRE3tIYbF7WkBktKPRusUkSZu7u8qEKzRekZyehlwiTRIMpJKr0xSGcAHGOjZmO-ZAxQkpQGODJJJN1TDLaBDXcLIQZjQATyWpwyFrIGSLzRgq0VWDbB4aA6rRLGlw8FzFO5m7d7lCqlIqAi0QLjHgc2VW1JLb74G233_dL4y2jO_NOAdbjhEFaWpzeScwjkDsNdpU2OVg2tKFU0ysNM1F821ltyrHFhUcmjCANIVKVNNoQCx1Zm0i6Xno7yoRJ8jAIdmq19dPURqTMQ7xkGKcHVKCBQYcNW_9CEKYsA20DlYfXo7ASSNQdoeV8Jpk8Zbt2D09DEBi49gkGkR5mkDGCgoMbghLkW0YXqHcWvwKBrfIJQpssnxio7lmf6XXiPcZCHayU2DRFoOWEOlJFCiKawMtzpxOxwFVE0cj1J2DL_TJyMsZKR9ttHcSX0CFNMeY1kN4qOFVKgzA6wyhg1_MHqO8AY4ME6WDkGaql3sLBxLLARuFbgchV_JgoXpYLIUneT7QwTXWjjwBlyoUOdTnm8xjzDmsU8a0kIOGd8qBkqlrhBAHqiqFIrwKbeeLUBeF0KQ6pGKkHVRQoPAOcxwFCQvXINN9TuHjbuLnK2oKE4yzR7uG3QsLS-EjbxG7JDCD4G5otwZukMRvNDcaIDUnFs2rhRUAIq6T_3vlrDIoK1WigokB5-nb0FOXwpHv3704mNWlaUVRoqh1pqjjx2EdH5FAleA7Aqi4NvkSLmHQcJqZiSjKoqk6SA0YXBZpsVaQ1RK8nlUljTpUmtzUYqBKCp7ApTUXZ1XAYF2SBYEjXm23Vwk0MZIOIu5IpwoSCxsyAKA_ok'
     OAK.decode(oak)
   end
@@ -756,6 +765,7 @@ class OakTest < Minitest::Test
     '0123'                 => 123.0,
     '-0123'                => -123.0,
   }.each do |str,float|
+    if false # TODO
     test "Thursday 2016-06-30 extreme #{str} #{float}" do
       oak_s = "oak_3NNN_0_#{2+str.size}_F1F#{str}_ok" # size too small
       oak_b = "oak_3NNN_0_#{4+str.size}_F1F#{str}_ok" # size too big
@@ -768,13 +778,14 @@ class OakTest < Minitest::Test
       end
       assert_equal float, OAK.decode(oak), "#{str} ==> #{oak}"
     end
+    end # if false # TODO
   end
 
-  test "OAK.encryption_algo is new each time to prevent state bleed" do
-    assert_not_equal OAK.encryption_algo.object_id, OAK.encryption_algo.object_id
+  def test_OAK_encryption_algo_is_new_each_time_to_prevent_state_bleed
+    refute_equal OAK.encryption_algo.object_id, OAK.encryption_algo.object_id
   end
 
-  test "OAK.random_key and OAK.random_iv are very random" do
+  def test_OAK_random_key_and_OAK_random_iv_are_very_random
     #
     # OAK.random_key and OAK.random_iv expected to approach
     # cryptographical security.
@@ -792,26 +803,26 @@ class OakTest < Minitest::Test
     assert_equal [ 12     ], ivs.map(&:size).uniq  # AES-256-GCM has  96-bit ivs
   end
 
-  test "OAK::Key.inspect is printable" do
+  def test_OAK_Key_inspect_is_printable
     k    = OAK.random_key
     key  = OAK::Key.new(k)
     ["#{key}", "#{[key]}"] # literals in void context test for crash
   end
 
-  test "OAK::Key.inspect obfuscates the sensitive key" do
+  def test_OAK_Key_inspect_obfuscates_the_sensitive_key
     k    = OAK.random_key
     key  = OAK::Key.new(k)
-    assert_equal        k,           key.key
-    assert_not_includes key.inspect, key.key
-    assert_not_includes key.inspect, key.key.inspect
-    assert_not_includes key.to_s,    key.key
-    assert_not_includes "#{key}",    key.key
-    assert_not_includes "#{key}",    key.key.inspect
-    assert_not_includes "#{[key]}",  key.key
-    assert_not_includes "#{[key]}",  key.key.inspect
+    assert_equal    k,           key.key
+    refute_includes key.inspect, key.key
+    refute_includes key.inspect, key.key.inspect
+    refute_includes key.to_s,    key.key
+    refute_includes "#{key}",    key.key
+    refute_includes "#{key}",    key.key.inspect
+    refute_includes "#{[key]}",  key.key
+    refute_includes "#{[key]}",  key.key.inspect
   end
 
-  test "OAK::Key.initialize demands valid values" do
+  def test_OAK_Key_initialize_demands_valid_values
     #
     # unhappy some are non-strings or empty or will offend OpenSSL::Cipher
     #
@@ -835,7 +846,7 @@ class OakTest < Minitest::Test
     end
   end
 
-  test "OAK::KeyChain.initialize demands valid values" do
+  def test_OAK_KeyChain_initialize_demands_valid_values
     k1   = OAK.random_key
     k2   = OAK.random_key
     key1 = OAK::Key.new(k1)
@@ -898,7 +909,7 @@ class OakTest < Minitest::Test
     end
   end
 
-  test "OAK::KeyChain is to_s and inspect-able" do
+  def test_OAK_KeyChain_is_to_s_and_inspectable
     k1    = OAK.random_key
     k2    = OAK.random_key
     key1  = OAK::Key.new(k1)
@@ -909,7 +920,7 @@ class OakTest < Minitest::Test
     ["#{chain}", "#{[chain]}"] # literals in void context test for crash
   end
 
-  test "parse_env_chain" do
+  def test_parse_env_chain
     key_a  = OAK.random_key
     key_b  = OAK.random_key
     env    = {
@@ -932,7 +943,7 @@ class OakTest < Minitest::Test
     end
   end
 
-  test 'OAK_4 Hello, World!' do
+  def test_OAK_4_Hello_World
     #
     # Life is much simpler without encryption.
     #
@@ -999,7 +1010,7 @@ class OakTest < Minitest::Test
     assert_equal [ plaintext ], free_reverse.uniq
   end
 
-  test "properties of encrypted OAK strings" do
+  def test_properties_of_encrypted_OAK_strings
     key_chain = OAK::KeyChain.new(
       {
         'x' => OAK::Key.new('12345678901234567890123456789012'),
@@ -1106,7 +1117,7 @@ class OakTest < Minitest::Test
     assert_equal oaks, oaks.uniq
   end
 
-  test "reversibility of encrypted OAK strings" do
+  def test_reversibility_of_encrypted_OAK_strings
     plain     = 'Hello!'
     key_chain = OAK::KeyChain.new(
       {
@@ -1149,13 +1160,13 @@ class OakTest < Minitest::Test
     assert_equal plain,  OAK.decode(got,key_chain: key_chain)
   end
 
-  test "key not found during encryption" do
+  def test_key_not_found_during_encryption
     assert_raises(ArgumentError) do
       OAK.encode('Woo-hoo!',key_chain: OAK::KeyChain.new({}), key: 'bogus')
     end
   end
 
-  test "key not found during decryption" do
+  def test_key_not_found_during_decryption
     key_chain = OAK::KeyChain.new(
       {
         'a' => OAK::Key.new('12345678901234567890123456789012'),
@@ -1170,7 +1181,7 @@ class OakTest < Minitest::Test
     end
   end
 
-  test "force_oak_4" do
+  def test_force_oak_4
     plain     = 'Hello!'
     key_chain = OAK::KeyChain.new(
       {
@@ -1303,6 +1314,7 @@ class OakTest < Minitest::Test
     'oak_4a_B166_1gQ7f-h5FrDTVSwAVQ2FLaz4obu6FZO2C3YSAbaNroucz0DZfU7c59cVugFGQnR4Q9cXWNEr8FMaYUByvRJODF2glSy3Xcoo_eXkHGw6MhRrwuEVmxa7_d7LT_ijzOU1EFcMbvGy0LAlfcqR37hupVuE2tyygq7BISPx8g_ok',
   ].freeze
   DEFENSIVE_OAK_STRINGS.each do |defensive|
+    if false # TODO
 
     test "DEFENSIVE_OAK_STRINGS decode happily #{defensive}" do
       objA = [1, 2, 3]
@@ -1396,6 +1408,7 @@ class OakTest < Minitest::Test
         end
       end
     end
+    end # if false # TODO
 
   end
 
@@ -1447,7 +1460,7 @@ class OakTest < Minitest::Test
     'oak_3NMN_0_16_F4A3_1_2_3I1I2I3_ok',
   ].freeze
   SPECIFIC_MAGIC_OAK_CORRUPTION.each do |corrupt|
-    test "SPECIFIC_MAGIC_OAK_CORRUPTION #{corrupt}" do
+    define_method "test_SPECIFIC_MAGIC_OAK_CORRUPTION_#{corrupt}" do
       assert_raises(OAK::CantTouchThisStringError) do
         OAK.decode(corrupt,key_chain: KEY_CHAIN_A)
       end
@@ -1470,6 +1483,7 @@ class OakTest < Minitest::Test
     'F4A3_1_2_3I1I2I3',                                      # bad LZMA sequence
     'F6H2_1_2_3_4YA3_foosU0sU0A10_5_5_5_5_5_5_5_5_5_5SU1_x', # bad LZMA sequence
   ].freeze
+  if false # TODO jhw
   SPECIFIC_MAGIC_LZMA_CORRUPTION.each do |corrupt|
     test "SPECIFIC_MAGIC_OAK_CORRUPTION #{corrupt}" do
       assert_raises(RuntimeError) do
