@@ -1,7 +1,7 @@
 # coding: utf-8
 require 'test_helper'
 
-class OakTest < ActiveSupport::TestCase
+class OakTest < Minitest::Test
 
   KEY_CHAIN_A = OAK::KeyChain.new(
     {
