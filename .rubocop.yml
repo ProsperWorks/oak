@@ -53,7 +53,6 @@ Metrics/PerceivedComplexity:
 Metrics/LineLength:
   Exclude:
     - 'test/**/*.rb'
-
 Naming/UncommunicativeMethodParamName:
   Enabled: false
 
@@ -73,15 +72,3 @@ Layout:
 #
 Style:
   Enabled: false
-
-# I like a lot of the Lint tests, but not these.
-#
-Lint/AmbiguousBlockAssociation:           # obnoxiously rejects idiomatic Ruby
-  Enabled: false
-
-# Naming/FileName is kind of cool but off-base w/r/t demanding that
-# Appraisals use snake_case.
-#
-Naming/FileName:
-  Exclude:
-    - Appraisals
