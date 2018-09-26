@@ -6,10 +6,7 @@
 # incept: 2016-03-05
 #
 
-# This is *not* a Rails program, though it does require some code from
-# ALI.
-#
-require_relative '../lib/util/oak.rb'
+require_relative '../lib/oak.rb'
 require          'optimist'
 
 OLD_ARGV = ARGV.dup            # ARGV is consumed by Optimist but we use later.

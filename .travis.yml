@@ -12,3 +12,4 @@ before_script:
 script:
   - bundle exec rubocop --display-cop-names --display-style-guide
   - bundle exec rake test
+  - bundle exec make test

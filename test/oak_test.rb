@@ -322,9 +322,9 @@ class OakTest < Minitest::Test
         assert_match(/^oak_[3|4].*_ok$/m,  encode)
         assert_equal Encoding::ASCII_8BIT, encode.encoding
         #
-        # In the header comments for lib/util/oak.rb, we promised at
-        # least one format which would be free of {}, comma,
-        # whitespace, and other nasty characters.
+        # In the header comments for lib/oak.rb, we promised at least
+        # one format which would be free of {}, comma, whitespace, and
+        # other nasty characters.
         #
         # That format is :base64.
         #

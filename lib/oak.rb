@@ -1,19 +1,12 @@
 # coding: utf-8
 #
 # OAK: An encoding format with enough polymorphism to support run-time
-# performance experimentation.  Includes a some future-proofing.
+# performance experimentation and some light encryption-at-rest.
 #
 # author: jhw@prosperworks.com
 # incept: 2016-03-02
 
-require 'oak/version'
-
-# This code operates both in a Rails context and in a plain Ruby
-# context (see bin/oak.rb).
-#
-# We require our dependencies explicitly, and avoid Rails-isms.
-#
-require 'contracts'
+require 'contracts'  # TODO: cut
 require 'strscan'
 require 'digest'
 require 'base64'
