@@ -41,6 +41,7 @@ OPTIMIST_EXAMPLES
   banner ""
   banner "Options:"
   banner ""
+  version "#{$0} #{OAK::VERSION}"
   opt(
     :decrypt,
     'decrypt OAK using ENIGMA_KEYS to decrypt',

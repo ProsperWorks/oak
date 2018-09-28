@@ -30,6 +30,7 @@ Examples:
   world
 OPTIMIST_EXAMPLES
   banner "Options:"
+  version "#{$0} #{OAK::VERSION}"
   opt :redundancy,   'redundancy',                   :default => 'crc32'
   opt :format,       'format',                       :default => 'base64'
   opt :compression,  'compression',                  :default => 'none'
