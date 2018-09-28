@@ -268,18 +268,6 @@ class OakTest < Minitest::Test
     end
   end
 
-  # Unhappy options should all be rejected by encode().
-  #
-  def test_contract_violations_encode
-    OPTION_NAMES.each do |option_name|
-      [ :invalid_symbol, 'invalid_string' ].each do |unhappy_value|
-        assert_raises(ArgumentError,"#{option_name} => #{unhappy_value}") do
-          OAK.encode('',{ option_name => unhappy_value })
-        end
-      end
-    end
-  end
-
   # Some nasty surprises came up when testing OAK-for-Summaries in
   # prod in Escargot.
   #
