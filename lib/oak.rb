@@ -6,6 +6,7 @@
 # author: jhw@prosperworks.com
 # incept: 2016-03-02
 
+require 'oak/version'
 require 'contracts'  # TODO: cut
 require 'strscan'
 require 'digest'

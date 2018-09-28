@@ -6,8 +6,8 @@
 # incept: 2016-03-05
 #
 
-require_relative '../lib/oak.rb'
-require          'optimist'
+require 'oak'
+require 'optimist'
 
 OLD_ARGV = ARGV.dup            # ARGV is consumed by Optimist but we use later.
 OPTS     = Optimist.options do
@@ -30,6 +30,7 @@ Examples:
   world
 OPTIMIST_EXAMPLES
   banner "Options:"
+  version "#{$0} #{OAK::VERSION}"
   opt :redundancy,   'redundancy',                   :default => 'crc32'
   opt :format,       'format',                       :default => 'base64'
   opt :compression,  'compression',                  :default => 'none'

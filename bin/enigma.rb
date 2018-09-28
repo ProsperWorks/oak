@@ -6,8 +6,8 @@
 # incept: 2018-08-02
 #
 
-require_relative '../lib/oak.rb'
-require          'optimist'
+require 'oak'
+require 'optimist'
 
 OPTS        = Optimist.options do
   banner "#{$0} cli driver for wrapping secrets with OAK encryption"
@@ -41,6 +41,7 @@ OPTIMIST_EXAMPLES
   banner ""
   banner "Options:"
   banner ""
+  version "#{$0} #{OAK::VERSION}"
   opt(
     :decrypt,
     'decrypt OAK using ENIGMA_KEYS to decrypt',
