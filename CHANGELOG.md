@@ -2,7 +2,7 @@
 
 - Use `Kernel#autoload` instead of `require` to reduce min exec time.
 - `oak`, `oak.rb`, `enigma`, and `enigma.rb` published as executables from gem.
-
+- Documentation reorg and cleanup.
 
 ## 0.4.0 (2018-09-24)
 
