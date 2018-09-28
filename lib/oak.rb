@@ -6,16 +6,16 @@
 # author: jhw@prosperworks.com
 # incept: 2016-03-02
 
-require 'oak/version'
-require 'contracts'  # TODO: cut
-require 'strscan'
-require 'digest'
-require 'base64'
-require 'lz4-ruby'
-require 'zlib'
-require 'bzip2/ffi'
-require 'lzma'
-require 'openssl'
+require_relative 'oak/version'
+require          'contracts'  # TODO: cut
+require          'strscan'
+require          'digest'
+require          'base64'
+require          'lz4-ruby'
+require          'zlib'
+require          'bzip2/ffi'
+require          'lzma'
+require          'openssl'
 
 # Some design desiderata with which I started this project.
 #

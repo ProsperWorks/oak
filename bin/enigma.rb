@@ -6,8 +6,8 @@
 # incept: 2018-08-02
 #
 
-require 'oak'
-require 'optimist'
+require_relative '../lib/oak.rb'
+require          'optimist'
 
 OPTS        = Optimist.options do
   banner "#{$0} cli driver for wrapping secrets with OAK encryption"

@@ -6,8 +6,8 @@
 # incept: 2016-03-05
 #
 
-require 'oak'
-require 'optimist'
+require_relative '../lib/oak.rb'
+require          'optimist'
 
 OLD_ARGV = ARGV.dup            # ARGV is consumed by Optimist but we use later.
 OPTS     = Optimist.options do
