@@ -59,10 +59,11 @@ TODO: rdoc?
 ```
 $ echo hello | bin/oak --mode encode-file
 oak_3CNB_911092726_16_RjFTVTZfaGVsbG8K_ok
-$ echo hello | bin/oak --mode encode-file | bin/oak --mode decode-file
+$ echo oak_3CNB_911092726_16_RjFTVTZfaGVsbG8K_ok | bin/oak --mode decode-file
 hello
-$ echo hello | bin/oak --mode encode-file --compression lz4 --force true | bin/oak --mode decode-file
- echo hello | bin/oak --mode encode-file --compression zlib --force true | bin/oak --mode decode-file
+$ echo hello | bin/oak --mode encode-file --compression lz4 --force true
+oak_3C4B_911092726_19_DMBGMVNVNl9oZWxsbwo_ok
+$ echo oak_3C4B_911092726_19_DMBGMVNVNl9oZWxsbwo_ok | bin/oak --mode decode-file
 hello
 ```
 
@@ -83,8 +84,7 @@ $ echo oak_4foo_B59_Si1VQNhf1qZFS31cMVF1ijVcyGV4SUzgr_19QQ0FZ8MFIbIR0D8rT3Ao3W8_
 hello
 $ echo oak_4foo_B59_LLmwT44ZPWRqFsktyInJAa5L8haeVovJ_lbc05BgAfQXmMHAZdRXkx4nSj4_ok | bin/enigma --decrypt
 hello
-[jhw@mac ~/oak (readme-work)]$ $ echo hello | bin/enigma --encrypt
--bash: $: command not found
+```
 
 ## Further Reading
 
