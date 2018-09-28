@@ -45,14 +45,47 @@ require 'contracts'  # TODO: cut
 #
 # ...and rake test in particular is clearly zippier.
 #
-# I repro with DO_GREEDY=true and DO_LAZY=false:
+# I repro with DO_GREEDY=true DO_LAZY=false DO_AUTO=false:
 #
+#   $ make clean && time bundle exec make test
+#   ...
 #   real 0m26.678s
 #   user 0m27.641s
 #   sys  0m5.006s
+#   $ bundle exec time -p bin/oak.rb --help > /dev/null
+#   real         0.31
+#   user         0.25
+#   sys          0.05
 #
-DO_GREEDY = true
-DO_LAZY   = false
+# Trying again with DO_GREEDY=false DO_LAZY=true DO_AUTO=false:
+#
+#   $ make clean && time bundle exec make test
+#   ...
+#   real  1m13.949s
+#   user  0m51.341s
+#   sys   0m28.009s
+#   $ bundle exec time -p bin/oak.rb --help > /dev/null
+#   real         0.26
+#   user         0.21
+#   sys          0.04
+#
+# Hey-hey, but with DO_GREEDY=false DO_LAZY=false DO_AUTO=true:
+#
+#   $ make clean && time bundle exec make test
+#   ...
+#   real 0m25.914s
+#   user 0m26.694s
+#   sys  0m4.778s
+#   $ bundle exec time -p bin/oak.rb --help > /dev/null
+#   real         0.27
+#   user         0.22
+#   sys          0.04
+#
+# Best of both worlds?
+#
+DO_GREEDY = false
+DO_LAZY   = true
+DO_AUTO   = false
 if DO_GREEDY
   require 'strscan'
   require 'digest'
@@ -62,6 +95,16 @@ if DO_GREEDY
   require 'bzip2/ffi'
   require 'lzma'
   require 'openssl'
+end
+if DO_AUTO
+  autoload :StringScanner, 'strscan'
+  autoload :Digest,        'digest'
+  autoload :Base64,        'base64'
+  autoload :LZ4,           'lz4-ruby'
+  autoload :Zlib,          'zlib'
+  autoload :Bzip2,         'bzip2/ffi'
+  autoload :LZMA,          'lzma'
+  autoload :OpenSSL,       'openssl'
 end
 
 # Some design desiderata with which I started this project.
