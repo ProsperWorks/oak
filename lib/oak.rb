@@ -6,8 +6,8 @@
 # author: jhw@prosperworks.com
 # incept: 2016-03-02
 
-require 'oak/version'
-require 'contracts'  # TODO: cut
+require_relative 'oak/version'
+require          'contracts'  # TODO: cut
 #
 # We depend on other gems, but for performance they are only required
 # on demand:
@@ -84,8 +84,8 @@ require 'contracts'  # TODO: cut
 # Best of both worlds?
 #
 DO_GREEDY = false
-DO_LAZY   = true
-DO_AUTO   = false
+DO_LAZY   = false
+DO_AUTO   = true
 if DO_GREEDY
   require 'strscan'
   require 'digest'
