@@ -6,7 +6,37 @@
 # author: jhw@prosperworks.com
 # incept: 2016-03-02
 
+require 'oak/version'
 require 'contracts'  # TODO: cut
+#
+# We depend on other gems, but for performance they are only required
+# on demand:
+#
+#   strscan
+#   digest
+#   base64
+#   lz4-ruby
+#   zlib
+#   bzip2/ffi
+#   lzma
+#   openssl
+#
+# By not loading these up front, we save about 0.5s on simple
+# invocation of bin/oak.rb which only exercise one or two paths here.
+#
+
+# 'make clean && time bundle exec make test' without greedy require reports:
+#
+#   real 1m19.045s
+#   user 0m53.751s
+#   sys	 0m30.060s
+#
+# with greedy require reports:
+#
+#   real  1m17.119s
+#   user  0m54.063s
+#   sys   0m29.020s
+#
 require 'strscan'
 require 'digest'
 require 'base64'
@@ -360,6 +390,7 @@ module OAK
   # Get a new instance of OpenSSL::Cipher for our algorithm.
   #
   def self.encryption_algo
+    require 'openssl'
     OpenSSL::Cipher.new(ENCRYPTION_ALGO_NAME)
   end
 
@@ -677,6 +708,7 @@ module OAK
   #
   Contract String => Any
   def self._deserialize(str)
+    require 'strscan'
     scanner      = StringScanner.new(str)
     serial_code  = scanner.scan(/F/)
     if 'F' != serial_code
@@ -991,6 +1023,7 @@ module OAK
   #
   Contract String, Maybe[Hash] => String
   def self._unwrap(str,opts={})
+    require 'strscan'
     str         = str.b                   # str.b for dup to ASCII_8BIT
     sc          = StringScanner.new(str)
     ov          = sc.scan(/oak_[34]/)  or raise BAD_STR, "bad oak+ver"
@@ -1158,8 +1191,12 @@ module OAK
   def self._check(redundancy,str)
     case redundancy.to_s
     when 'none'        then return '0'
-    when 'crc32'       then return '%d' % Zlib.crc32(str)
-    when 'sha1'        then return Digest::SHA1.hexdigest(str)
+    when 'crc32'       then
+      require 'zlib'
+      return '%d' % Zlib.crc32(str)
+    when 'sha1'        then
+      require 'digest'
+      return Digest::SHA1.hexdigest(str)
     else
       raise ArgumentError, "unknown redundancy #{redundancy}"
     end
@@ -1181,6 +1218,7 @@ module OAK
       # If we were using Ruby 2.3+, we could use the option "padding:
       # false" instead of chopping out the /=*$/ with gsub.
       #
+      require 'base64'
       return Base64.urlsafe_encode64(str).gsub(/=.*$/,'')
     else
       raise ArgumentError, "unknown format #{format}"
@@ -1203,6 +1241,7 @@ module OAK
       # strict_encode64, and urlsafe_encode64 both with and without
       # the /=*$/.
       #
+      require 'base64'
       return Base64.decode64(str.tr('-_','+/'))
     else
       raise ArgumentError, "unknown format #{format}"
@@ -1262,6 +1301,7 @@ module OAK
   #
   def self._decrypt(encryption_key,data,auth_data)
     return data if !encryption_key
+    require 'openssl'
     iv_size            = ENCRYPTION_ALGO_IV_BYTES
     auth_tag_size      = ENCRYPTION_ALGO_AUTH_TAG_BYTES
     iv                 = data[0..(iv_size-1)]
@@ -1287,15 +1327,19 @@ module OAK
     when 'none'
       compressed  = str
     when 'lz4'
+      require 'lz4-ruby'
       compressed  = LZ4.compress(str)
     when 'zlib'
+      require 'zlib'
       compressed  = Zlib.deflate(str)
     when 'bzip2'
+      require 'bzip2/ffi'
       io          = StringIO.new
       io.set_encoding(Encoding::ASCII_8BIT)
       Bzip2::FFI::Writer.write(io, str)
       compressed  = io.string
     when 'lzma'
+      require 'lzma'
       compressed  = LZMA.compress(str)
     else
       raise ArgumentError, "unknown compression #{compression}"
@@ -1315,18 +1359,21 @@ module OAK
     when 'none'
       return str
     when 'lz4'
+      require 'lz4-ruby'
       begin
         return LZ4.uncompress(str)
       rescue LZ4Internal::Error => ex
         raise CantTouchThisStringError, "#{ex.class}: #{ex.message}"
       end
     when 'zlib'
+      require 'zlib'
       begin
         return Zlib::Inflate.inflate(str)
       rescue Zlib::DataError => ex
         raise CantTouchThisStringError, "#{ex.class}: #{ex.message}"
       end
     when 'bzip2'
+      require 'bzip2/ffi'
       io  = StringIO.new(str)
       raw = nil
       begin
@@ -1337,6 +1384,7 @@ module OAK
       str = raw.b # dupe to Encoding::ASCII_8BIT
       return str
     when 'lzma'
+      require 'lzma'
       begin
         raw = LZMA.decompress(str)
       rescue RuntimeError => ex
