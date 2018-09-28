@@ -7,7 +7,6 @@
 # incept: 2016-03-02
 
 require_relative 'oak/version'
-require          'contracts'  # TODO: cut
 #
 # Many of our dependencies are used in only some flows.  We load them
 # via Kernel#autoload to shave time in bin/oak.rb on executions when
@@ -339,8 +338,6 @@ autoload :OpenSSL,       'openssl'
 
 module OAK
 
-  include Contracts
-
   # CantTouchThisObjectError is thrown when encode() or serialize() is
   # called on an object which cannot be encoded losslessly by OAK.
   #
@@ -527,7 +524,6 @@ module OAK
   #
   # @raises ArgumentError if obj is not handled.
   #
-  Contract Any, Maybe[Hash] => String
   def self.encode(obj,opts={})
     ser = _serialize(obj)
     _wrap(ser,opts)
@@ -546,8 +542,10 @@ module OAK
   #
   # @raises ArgumentError if str is not a recognized string.
   #
-  Contract String, Maybe[Hash] => Any
   def self.decode(str,opts={})
+    if !str.is_a?(String)
+      raise ArgumentError, "str not a String"
+    end
     ser = _unwrap(str,opts)
     _deserialize(ser)
   end
@@ -572,7 +570,6 @@ module OAK
   # @raises CantTouchThisObjectError if obj contains any types or
   # structure which cannot be encoded reversibly by OAK.
   #
-  Contract Any => String
   def self._serialize(obj)
     seen,_reseen = _safety_dance(obj) do |child|
       next if ALL_TYPES.select{ |type| child.is_a?(type) }.size > 0
@@ -690,7 +687,6 @@ module OAK
   #
   # @raises CantTouchThisObjectError if str is not recognized
   #
-  Contract String => Any
   def self._deserialize(str)
     scanner      = StringScanner.new(str)
     serial_code  = scanner.scan(/F/)
@@ -878,7 +874,6 @@ module OAK
   #
   # @returns an OAK string
   #
-  Contract String, Maybe[Hash] => String
   def self._wrap(str,opts={})
     redundancy               = (opts[:redundancy]  || :crc32).to_s
     compression              = (opts[:compression] || :none).to_s
@@ -1004,7 +999,6 @@ module OAK
   #
   # @raises ArgumentError if str is not in OAK format.
   #
-  Contract String, Maybe[Hash] => String
   def self._unwrap(str,opts={})
     str         = str.b                   # str.b for dup to ASCII_8BIT
     sc          = StringScanner.new(str)
@@ -1169,7 +1163,6 @@ module OAK
 
   # Helper method, calculates redundancy check for str.
   #
-  Contract Or[Symbol,String],String => String
   def self._check(redundancy,str)
     case redundancy.to_s
     when 'none'        then return '0'
@@ -1182,7 +1175,6 @@ module OAK
 
   # Helper method, calculates formatted version of str.
   #
-  Contract Or[Symbol,String],String => String
   def self._format(format,str)
     case format.to_s
     when 'none'
@@ -1202,7 +1194,6 @@ module OAK
     end
   end
 
-  Contract Or[Symbol,String],String => String
   def self._deformat(format,str)
     case format.to_s
     when 'none'
@@ -1296,7 +1287,6 @@ module OAK
 
   # Helper for wrap() and unwrap(), multiplexes compression.
   #
-  Contract Or[Symbol,String],Bool,String => [String,String]
   def self._compress(compression,force,str)
     case compression.to_s
     when 'none'
@@ -1324,7 +1314,6 @@ module OAK
 
   # Helper for wrap() and unwrap(), multiplexes decompression.
   #
-  Contract Or[Symbol,String],String => String
   def self._decompress(compression,str)
     case compression.to_s
     when 'none'
