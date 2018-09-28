@@ -37,14 +37,32 @@ require 'contracts'  # TODO: cut
 #   user  0m54.063s
 #   sys   0m29.020s
 #
-require 'strscan'
-require 'digest'
-require 'base64'
-require 'lz4-ruby'
-require 'zlib'
-require 'bzip2/ffi'
-require 'lzma'
-require 'openssl'
+# but back on master, with none of the lazy require, we get:
+#
+#   real 0m26.574s
+#   user 0m27.461s
+#   sys  0m5.107s
+#
+# ...and rake test in particular is clearly zippier.
+#
+# I repro with DO_GREEDY=true and DO_LAZY=false:
+#
+#   real 0m26.678s
+#   user 0m27.641s
+#   sys  0m5.006s
+#
+DO_GREEDY = true
+DO_LAZY   = false
+if DO_GREEDY
+  require 'strscan'
+  require 'digest'
+  require 'base64'
+  require 'lz4-ruby'
+  require 'zlib'
+  require 'bzip2/ffi'
+  require 'lzma'
+  require 'openssl'
+end
 
 # Some design desiderata with which I started this project.
 #
@@ -390,7 +408,7 @@ module OAK
   # Get a new instance of OpenSSL::Cipher for our algorithm.
   #
   def self.encryption_algo
-    require 'openssl'
+    require 'openssl' if DO_LAZY
     OpenSSL::Cipher.new(ENCRYPTION_ALGO_NAME)
   end
 
@@ -708,7 +726,7 @@ module OAK
   #
   Contract String => Any
   def self._deserialize(str)
-    require 'strscan'
+    require 'strscan' if DO_LAZY
     scanner      = StringScanner.new(str)
     serial_code  = scanner.scan(/F/)
     if 'F' != serial_code
@@ -1023,7 +1041,7 @@ module OAK
   #
   Contract String, Maybe[Hash] => String
   def self._unwrap(str,opts={})
-    require 'strscan'
+    require 'strscan' if DO_LAZY
     str         = str.b                   # str.b for dup to ASCII_8BIT
     sc          = StringScanner.new(str)
     ov          = sc.scan(/oak_[34]/)  or raise BAD_STR, "bad oak+ver"
@@ -1192,10 +1210,10 @@ module OAK
     case redundancy.to_s
     when 'none'        then return '0'
     when 'crc32'       then
-      require 'zlib'
+      require 'zlib' if DO_LAZY
       return '%d' % Zlib.crc32(str)
     when 'sha1'        then
-      require 'digest'
+      require 'digest' if DO_LAZY
       return Digest::SHA1.hexdigest(str)
     else
       raise ArgumentError, "unknown redundancy #{redundancy}"
@@ -1218,7 +1236,7 @@ module OAK
       # If we were using Ruby 2.3+, we could use the option "padding:
       # false" instead of chopping out the /=*$/ with gsub.
       #
-      require 'base64'
+      require 'base64' if DO_LAZY
       return Base64.urlsafe_encode64(str).gsub(/=.*$/,'')
     else
       raise ArgumentError, "unknown format #{format}"
@@ -1241,7 +1259,7 @@ module OAK
       # strict_encode64, and urlsafe_encode64 both with and without
       # the /=*$/.
       #
-      require 'base64'
+      require 'base64' if DO_LAZY
       return Base64.decode64(str.tr('-_','+/'))
     else
       raise ArgumentError, "unknown format #{format}"
@@ -1301,7 +1319,7 @@ module OAK
   #
   def self._decrypt(encryption_key,data,auth_data)
     return data if !encryption_key
-    require 'openssl'
+    require 'openssl' if DO_LAZY
     iv_size            = ENCRYPTION_ALGO_IV_BYTES
     auth_tag_size      = ENCRYPTION_ALGO_AUTH_TAG_BYTES
     iv                 = data[0..(iv_size-1)]
@@ -1327,19 +1345,19 @@ module OAK
     when 'none'
       compressed  = str
     when 'lz4'
-      require 'lz4-ruby'
+      require 'lz4-ruby' if DO_LAZY
       compressed  = LZ4.compress(str)
     when 'zlib'
-      require 'zlib'
+      require 'zlib' if DO_LAZY
       compressed  = Zlib.deflate(str)
     when 'bzip2'
-      require 'bzip2/ffi'
+      require 'bzip2/ffi' if DO_LAZY
       io          = StringIO.new
       io.set_encoding(Encoding::ASCII_8BIT)
       Bzip2::FFI::Writer.write(io, str)
       compressed  = io.string
     when 'lzma'
-      require 'lzma'
+      require 'lzma' if DO_LAZY
       compressed  = LZMA.compress(str)
     else
       raise ArgumentError, "unknown compression #{compression}"
@@ -1359,21 +1377,21 @@ module OAK
     when 'none'
       return str
     when 'lz4'
-      require 'lz4-ruby'
+      require 'lz4-ruby' if DO_LAZY
       begin
         return LZ4.uncompress(str)
       rescue LZ4Internal::Error => ex
         raise CantTouchThisStringError, "#{ex.class}: #{ex.message}"
       end
     when 'zlib'
-      require 'zlib'
+      require 'zlib' if DO_LAZY
       begin
         return Zlib::Inflate.inflate(str)
       rescue Zlib::DataError => ex
         raise CantTouchThisStringError, "#{ex.class}: #{ex.message}"
       end
     when 'bzip2'
-      require 'bzip2/ffi'
+      require 'bzip2/ffi' if DO_LAZY
       io  = StringIO.new(str)
       raw = nil
       begin
@@ -1384,7 +1402,7 @@ module OAK
       str = raw.b # dupe to Encoding::ASCII_8BIT
       return str
     when 'lzma'
-      require 'lzma'
+      require 'lzma' if DO_LAZY
       begin
         raw = LZMA.decompress(str)
       rescue RuntimeError => ex
