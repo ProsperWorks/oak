@@ -123,8 +123,8 @@ Biggest limitation of JSON IMO is that Hash keys can only be strings:
 ### Considering YAML
 
 YAML is strong where JSON is strong, and also strong in many places
-where JSON is weak.  In fact, YAML includes JSON as a subformat:
-JSON strings *are* YAML strings!
+where JSON is weak.  In fact, YAML includes JSON as a subformat: JSON
+strings *are* YAML strings!
 
 Some of the advantages of YAML over JSON are:
 
@@ -132,15 +132,15 @@ Some of the advantages of YAML over JSON are:
 - arguably more human-readable than JSON
 - YAML spec subsumes JSON spec: JSON files are YAML files
 - supports non-string keys
-  - e.g. {123=>'x'}  == YAML.load(YAML.dump({123=>'x'}))
+  - e.g. `{123=>'x'}  == YAML.load(YAML.dump({123=>'x'}))`
 - supports symbols
-  - e.g. :foo        == YAML.load(YAML.dump(:foo))
-  - e.g. {:foo=>'x'} == YAML.load(YAML.dump({:foo=>'x'}))
+  - e.g. `:foo        == YAML.load(YAML.dump(:foo))`
+  - e.g. `{:foo=>'x'} == YAML.load(YAML.dump({:foo=>'x'}))`
 - allows integer or string as top-level object
 
-YAML overcomes the biggest limitation of JSON by supporting
-non-string hash keys:
-
+YAML overcomes the biggest limitation of JSON by supporting non-string
+hash keys:
+```
   2.1.6 :008 > obj = {'str'=>'bar',[1,2,3]=>'baz'}
    => {"str"=>"bar", [1, 2, 3]=>"baz"}
   2.1.6 :012 > YAML.dump(obj)
@@ -149,11 +149,12 @@ non-string hash keys:
   => {"str"=>"bar", [1, 2, 3]=>"baz"}
   2.1.6 :014 > YAML.load(YAML.dump(obj)) == obj
    => true
+```
 
 Note: YAML's support for Symbols is due to Psych, not strictly the
 YAML format itself.  I've taken both `YAML.dump(:foo)` and
 `YAML.dump(':foo')` into Python and done `yaml.load()` on them.  Both
-result in ':foo'.  So this nicety is not portable.
+result in `':foo'`.  So this nicety is not portable.
 
 But YAML still has some shortcomings:
 
@@ -209,16 +210,16 @@ redundancy-eaters.  They will all be cheap to compress, cheap to
 uncompress, but will delver only modest compression ratios.
 
 This family of algorithms are unfamiliar to those accustomed to
-archive formats, but they are used widely in low-latency
-applications (such as server caches ;) ).
+archive formats, but they are used widely in low-latency applications
+(such as server caches ;) ).
 
 To keep things simple, I settled on supporting only LZ4 because its
-gem, lz4-ruby, seems to have more mindshare and momentum.  It is
-weaker but faster than the other weak+fast options - which seems
-like the way to be.
+gem, `lz4-ruby`, seems to have more mindshare and momentum.  It is
+weaker but faster than the other weak+fast options - which seems like
+the way to be.
 
-Based on previous experience, I expect this to be a clear win for
-use in Redis caches vs being uncompressed.
+Based on previous experience, I expect this to be a clear win for use
+in Redis caches vs being uncompressed.
 
 ### Considering ZLIB
 
@@ -235,51 +236,51 @@ because it would feel strage not to.
 ### Considering BZIP2
 
 BZIP2 is an aggressive compression which uses the Burrows–Wheeler,
-move-to-front, and run-length-encoding transforms with Huffman It
-will be several times slower but several 10% stronger than ZLIB.  I
-chose the gem bzip2-ffi over the more flexible rbzip2 to make
-absolutely certain that we use the native libbz2 implementation and
-do not falling back silently to a Ruby version which is 100x slower
-if/when Heroku does not offer FFI.
+move-to-front, and run-length-encoding transforms with Huffman It will
+be several times slower but several 10% stronger than ZLIB.  I chose
+the gem bzip2-ffi over the more flexible rbzip2 to make absolutely
+certain that we use the native libbz2 implementation and do not
+falling back silently to a Ruby version which is 100x slower if/when
+Heroku does not offer FFI.
 
-Based on previous experience, I expect this option will dominate
-where data is generally cold or where storage is very expensive
-compared to CPU.
+Based on previous experience, I expect this option will dominate where
+data is generally cold or where storage is very expensive compared to
+CPU.
 
 ### Considering LZMA
 
 LZMA is the Lempel-Ziv-Markov chains algorithm.  It will be an order
 of magnitude more expensive to compress than BZIP2, but will
-decompress slightly faster and will yield better compression ratios
-by few 5%.
+decompress slightly faster and will yield better compression ratios by
+few 5%.
 
-This will be useful only for cases where read-write ratios are over
-10 and storage:cpu cost ratios are high.  When read-write ratios are
+This will be useful only for cases where read-write ratios are over 10
+and storage:cpu cost ratios are high.  When read-write ratios are
 close to unity, LZO will dominate where storage:cpu is low and BZIP2
 will dominate where storage:cpu is high.
 
-Nonetheless, I have a soft spot in my heart for this algorithm so I
-am including it - if only so we can rule it out by demonstration
-rather than hypothesis.
+Nonetheless, I have a soft spot in my heart for this algorithm so I am
+including it - if only so we can rule it out by demonstration rather
+than hypothesis.
 
 
 ## Encryption Choices
 
 Encryption is the first extension of OAK since it went live in
-Prosperworks's Redis layer on 2016-06-02 and in the S3
-Correspondence bodies since 2016-07-06.  There have been only
-Rubocop updates and nary a bugfix since 2016-07-01.
+ProsperWorks's Redis layer on 2016-06-02 and in the S3 Correspondence
+bodies since 2016-07-06.  There had been only Rubocop updates and nary
+a bugfix since 2016-07-01.
 
 ### Encryption-in-OAK Design Decisions (see arch doc for discussion):
 
-- Encryption is the only change in OAK_4.
-- OAK_4 will only support AES-256-GCM with random IVs chosen for
+- Encryption is the only change in OAK4.
+- OAK4 will only support AES-256-GCM with random IVs chosen for
   each encryption event.
-  - OAK_4 will use no salt other than the random IV.
+  - OAK4 will use no salt other than the random IV.
 - Encrypted OAK strings will be nondeterministic.
   - This crushes the desiderata of making OAK.encode a pure function.
   - This is unavoidable to avoid a blatant security hole.
-- OAK_4 dramatically changes how headers are managed from OAK_3.
+- OAK4 dramatically changes how headers are managed from OAK3.
   - Encrypts all headers which are not required for decryption.
   - Athenticates all headers and the encrypted stream.
 - Key rotation is supported.
@@ -289,14 +290,14 @@ Rubocop updates and nary a bugfix since 2016-07-01.
 ### Encryption-in-OAK Backward Compatibility
 
 Before encryption was added, the format identifier for OAK strings
-was 'oak_3'.
+was `'oak_3'`.
 
 To indicate we are making a non-backward compatible change, I am
-bumping that up to 'oak_4' for encrypted strings.
+bumping that up to `'oak_4'` for encrypted strings.
 
-The legacy 'oak_3' are still supported both on read and on write.
+The legacy OAK3 are still supported both on read and on write.
 
-By default, 'oak_4' is used only when encryption is requested.
+By default, OAK4 is used only when encryption is requested.
 
 ### Encryption-in-OAK Regarding Compression vs Encryption
 
@@ -304,16 +305,14 @@ Note that compression of encrypted strings is next to useless.  By
 design, encryption algorithms obscure exploitable redundancy in
 plaintext and produce incompressible ciphertext.
 
-On the other hand, in the wild there have been a handful of
-successful chosen-plaintext attacks on compress-then-encrypt
-encodings.  See:
+On the other hand, in the wild there have been a handful of successful
+chosen-plaintext attacks on compress-then-encrypt encodings.  See:
 
 - https://blog.appcanary.com/2016/encrypt-or-compress.html
 - https://en.wikipedia.org/wiki/CRIME
 
-OAK_4 supports compression and does compression-then-encryption.
+OAK4 supports compression and does compression-then-encryption.
 
-The extremely paranoid are encouraged to use compression: :none.
-Note however that the source data may be compressed.  Furthermore,
-for larger objects FRIZZY itself is, in part, a compression
-algorithm.
+The extremely paranoid are encouraged to use compression: :none.  Note
+however that the source data may be compressed.  Furthermore, for
+larger objects FRIZZY itself is, in part, a compression algorithm.
