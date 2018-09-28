@@ -66,6 +66,26 @@ $ echo hello | bin/oak --mode encode-file --compression lz4 --force true | bin/o
 hello
 ```
 
+## Using in Shell for Encryption
+```
+$ bin/enigma.rb --keygen
+oak_3CNB_2975186575_52_RjFTQTMyX00du8vD8WAikhLNgdnaOYtQV6uqyNqRz6modiEcJHOl_ok
+$ bin/enigma.rb --keygen
+oak_3CNB_1324948677_52_RjFTQTMyXytCueDDTpEOusKkPMANgaA9zsJuvOend5DCIJWwJdjC_ok
+$ export ENIGMA_KEYS=foo,bar
+$ export ENIGMA_KEY_foo=oak_3CNB_2975186575_52_RjFTQTMyX00du8vD8WAikhLNgdnaOYtQV6uqyNqRz6modiEcJHOl_ok
+$ export ENIGMA_KEY_bar=oak_3CNB_1324948677_52_RjFTQTMyXytCueDDTpEOusKkPMANgaA9zsJuvOend5DCIJWwJdjC_ok
+$ echo hello | bin/enigma --encrypt
+oak_4foo_B59_Si1VQNhf1qZFS31cMVF1ijVcyGV4SUzgr_19QQ0FZ8MFIbIR0D8rT3Ao3W8_ok
+$ echo hello | bin/enigma --encrypt
+oak_4foo_B59_LLmwT44ZPWRqFsktyInJAa5L8haeVovJ_lbc05BgAfQXmMHAZdRXkx4nSj4_ok
+$ echo oak_4foo_B59_Si1VQNhf1qZFS31cMVF1ijVcyGV4SUzgr_19QQ0FZ8MFIbIR0D8rT3Ao3W8_ok | bin/enigma --decrypt
+hello
+$ echo oak_4foo_B59_LLmwT44ZPWRqFsktyInJAa5L8haeVovJ_lbc05BgAfQXmMHAZdRXkx4nSj4_ok | bin/enigma --decrypt
+hello
+[jhw@mac ~/oak (readme-work)]$ $ echo hello | bin/enigma --encrypt
+-bash: $: command not found
+
 ## Further Reading
 
 For more details.
