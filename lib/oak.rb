@@ -56,6 +56,14 @@ require          'contracts'  # TODO: cut
 #   real         0.31
 #   user         0.25
 #   sys          0.05
+#   $ time -p bundle exec bin/oak.rb --help > /dev/null
+#   real 0.76
+#   user 0.64
+#   sys 0.11
+#   $ time -p bin/oak.rb --help > /dev/null
+#   real 0.57
+#   user 0.48
+#   sys 0.09
 #
 # Trying again with DO_GREEDY=false DO_LAZY=true DO_AUTO=false:
 #
@@ -68,6 +76,14 @@ require          'contracts'  # TODO: cut
 #   real         0.26
 #   user         0.21
 #   sys          0.04
+#   $ time -p bundle exec bin/oak.rb --help > /dev/null
+#   real 0.73
+#   user 0.61
+#   sys 0.11
+#   $ time -p bin/oak.rb --help > /dev/null
+#   real 0.16
+#   user 0.12
+#   sys 0.03
 #
 # Hey-hey, but with DO_GREEDY=false DO_LAZY=false DO_AUTO=true:
 #
@@ -80,6 +96,14 @@ require          'contracts'  # TODO: cut
 #   real         0.27
 #   user         0.22
 #   sys          0.04
+#   $ time -p bundle exec bin/oak.rb --help > /dev/null
+#   real 0.72
+#   user 0.60
+#   sys 0.11
+#   $ time -p bin/oak.rb --help > /dev/null
+#   real 0.16
+#   user 0.12
+#   sys 0.03
 #
 # Best of both worlds?
 #
