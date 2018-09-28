@@ -6,15 +6,30 @@
 # author: jhw@prosperworks.com
 # incept: 2016-03-02
 
-require 'contracts'  # TODO: cut
-require 'strscan'
-require 'digest'
-require 'base64'
-require 'lz4-ruby'
-require 'zlib'
-require 'bzip2/ffi'
-require 'lzma'
-require 'openssl'
+require_relative 'oak/version'
+require          'contracts'  # TODO: cut
+#
+# Many of our dependencies are used in only some flows.  We load them
+# via Kernel#autoload to shave time in bin/oak.rb on executions when
+# we just do a couple encodings or decodings and only with 1 set of
+# encoding options.
+#
+# This reduces the runtime of 'bin/oak.rb --help' from 0.57s to 0.16s
+# in tests on my Mac.  0.5s per invocation is kind of a big deal.
+#
+# This optimization only helps quick CLI invocations.  Fortunately,
+# longer-lived processes which use all the options are not hurt by
+# this.  With both greedy Kernel#require and lazy Kernel#autoload I
+# saw ~26s for 'make clean && time -p make test'.
+#
+autoload :StringScanner, 'strscan'
+autoload :Digest,        'digest'
+autoload :Base64,        'base64'
+autoload :LZ4,           'lz4-ruby'
+autoload :Zlib,          'zlib'
+autoload :Bzip2,         'bzip2/ffi'
+autoload :LZMA,          'lzma'
+autoload :OpenSSL,       'openssl'
 
 # Some design desiderata with which I started this project.
 #

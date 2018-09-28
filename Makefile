@@ -37,7 +37,7 @@ $(DESTDIR)/test-rake.ok: $(SOURCES)
 # "make test-shell-basic" tests bin/oak.rb for loadability and basic behavior.
 #
 .PHONY: test-shell-basic
-test test-shell: $(DESTDIR)/test-shell-basic.ok
+test test-shell-basic: $(DESTDIR)/test-shell-basic.ok
 $(DESTDIR)/test-shell-basic.ok: $(SOURCES)
 	@mkdir -p $(dir $@)
 	@echo
