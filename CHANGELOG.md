@@ -1,6 +1,7 @@
 ## 0.4.1 (PENDING - TBD)
 
 - `oak`, `oak.rb`, `enigma`, and `enigma.rb` published as executables from gem.
+- Removed heavier dep on `contracts`, switched to manual checks and looser spec.
 
 
 ## 0.4.0 (2018-09-24)
