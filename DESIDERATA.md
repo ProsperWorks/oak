@@ -1,59 +1,63 @@
-Some design desiderata with which I started this project.
+# oak design desiderata
 
-P1 means "top priorty"
-P2 means "very important"
-P3 means "nice to have"
-P4 means "not harmful if cheap"
+Some design goals with which I started this project.
 
-'+' means "accomplished"
-'-' means "not accomplished"
-'?' means "accomplished, but only for some combinations of arguments"
+- P1 means "top priorty"
+- P2 means "very important"
+- P3 means "nice to have"
+- P4 means "not harmful if cheap"
+
+- `+` means "accomplished"
+- `-` means "not accomplished"
+- `?` means "accomplished, but only for some combinations of arguments"
 
 Desiderata for the structure layer:
 
-  P1 + losslessly handle nil, true, false, Integer, and String
-  P1 + losslessly handle List with arbitrary values and deep nesting
-  P1 + losslessly handle Hash with string keys and deep nesting in values
-  P1 + detect cycles and DAGS in input structures, fail or handle
-  P1 + handle all Integer types without loss
-  P1 - handle Floats with no more than a small quantified loss
-  P2 + Hash key ordering is preserved in Ruby-Ruby transcoding
-  P3 - convenient:  vaguely human-readable representations available
-  P3 + encode cycles and DAGs
-  P3 + handle Hash with non-string keys and deep nesting in keys
-  P3 + losslessly handle Symbol distinct from String
-  P3 - handle Times and Dates
+- P1 + losslessly handle nil, true, false, Integer, and String
+- P1 + losslessly handle List with arbitrary values and deep nesting
+- P1 + losslessly handle Hash with string keys and deep nesting in values
+- P1 + detect cycles and DAGS in input structures, fail or handle
+- P1 + handle all Integer types without loss
+- P1 - handle Floats with no more than a small quantified loss
+- P2 + Hash key ordering is preserved in Ruby-Ruby transcoding
+- P3 - convenient:  vaguely human-readable representations available
+- P3 + encode cycles and DAGs
+- P3 + handle Hash with non-string keys and deep nesting in keys
+- P3 + losslessly handle Symbol distinct from String
+- P3 - handle Times and Dates
 
 Desiderata for the byte layer:
 
-  P1 + reversible:  original string can be reconstructed from only OAK string
-  P1 + unambiguous: no OAK string is the prefix of any other OAK string
-  P1 + extensible:  OAK strings contain ids for ver, format, compression, etc
-  P1 + robust:      error detection in OAK strings
-  P2 + flexible:    multiple compression modes available
-  P3 + convenient:  available representation without {}, comma, whitespace
-  P3 + convenient:  7-bit clean representations available
-  P3 + convenient:  representations which are selectable with double-click
-  P3 + convenient:  vaguely human-readable representations available
-  P3 - streamable:  reversing can be accomplished with definite-size buffers
-  P4 - embeddable:  reversing can be accomplished with fixed-size buffers
-  P4 - defensive:   error correction available (no good libs found)
+- P1 + reversible:  original string can be reconstructed from only OAK string
+- P1 + unambiguous: no OAK string is the prefix of any other OAK string
+- P1 + extensible:  OAK strings contain ids for ver, format, compression, etc
+- P1 + robust:      error detection in OAK strings
+- P2 + flexible:    multiple compression modes available
+- P3 + convenient:  available representation without `{}`, comma, whitespace
+- P3 + convenient:  7-bit clean representations available
+- P3 + convenient:  representations which are selectable with double-click
+- P3 + convenient:  vaguely human-readable representations available
+- P3 - streamable:  reversing can be accomplished with definite-size buffers
+- P4 - embeddable:  reversing can be accomplished with fixed-size buffers
+- P4 - defensive:   error correction available (no good libs found)
 
 Techniques used in the byte layer to accomplish these goals.
 
-  - manifest type id for self-identification
-  - manifest version id in case format changes in future
-  - salient encoding algorithm choices stored in output stream
-    - error detection algorithm aka redundancy
-    - compression
-    - formatting
-  - microchoices made to confine metadata characters to [_0-9a-z]
-  - algorithm menu constructed to offer data characters in [-_0-9a-z]
+- manifest type id for self-identification
+- manifest version id in case format changes in future
+- salient encoding algorithm choices stored in output stream
+  - error detection algorithm aka redundancy
+  - compression
+  - formatting
+- microchoices made to confine metadata characters to [_0-9a-z]
+- algorithm menu constructed to offer data characters in [-_0-9a-z]
 
 
-########### Serialization Choices ##########################################
+## Serialization Choices
 
-## Considering Marshal
+A survey of alternatives considered for the serialization layer.
+
+### Considering Marshal
 
 The Marshal format has some major drawbacks which I believe make it
 a nonstarter.
@@ -70,7 +74,7 @@ Marshal does offer one major advantage:
 - transcodes all Ruby value types and user-defined value-like classes
 - reported to be much faster than JSON or YAML for serializing
 
-## Considering JSON
+### Considering JSON
 
 JSON is awesome most of the time, especially in highly constrained
 environments such as API specifications and simple ad-hoc caching
@@ -91,12 +95,12 @@ structural level in OAK.
 - cannot represent cycles - encoder reject, stack overflow, or infinite loop
 - no native date or time handling
 - table keys may only be strings
-  - e.g. {'123'=>'x'} == JSON.parse(JSON.dump({123=>'x'}))
+  - e.g. `{'123'=>'x'} == JSON.parse(JSON.dump({123=>'x'}))`
 - type information symbol-vs-string lost, symbols transcode to strings
-  - e.g. 'foo'        == JSON.parse(JSON.dump(:foo))
-  - e.g. {'foo'=>'x'} == JSON.parse(JSON.dump({:foo=>'x'}))
+  - e.g. `'foo'        == JSON.parse(JSON.dump(:foo))`
+  - e.g. `{'foo'=>'x'} == JSON.parse(JSON.dump({:foo=>'x'}))`
 - official grammer only allows {} or [] as top-level object
-  - e.g. 123 == JSON.parse('123') but JSON.parse('123') raises ParserError
+  - e.g. `123 == JSON.parse('123')` but `JSON.parse('123')` raises `ParserError`
   - many parsers in the wild support only this strict official grammer
   - JSON is suitable only for document encoding, not streams
     - allows only one object per file
@@ -105,17 +109,18 @@ structural level in OAK.
     - no possibility of streamy processing
 
 Biggest limitation of JSON IMO is that Hash keys can only be strings:
+```
+2.1.6 :008 > obj = {'str'=>'bar',[1,2,3]=>'baz'}
+ => {"str"=>"bar", [1, 2, 3]=>"baz"}
+2.1.6 :009 > JSON.dump(obj)
+ => "{\"str\":\"bar\",\"[1, 2, 3]\":\"baz\"}"
+2.1.6 :010 > JSON.parse(JSON.dump(obj))
+ => {"str"=>"bar", "[1, 2, 3]"=>"baz"}
+2.1.6 :011 > JSON.parse(JSON.dump(obj)) == obj
+ => false
+```
 
-  2.1.6 :008 > obj = {'str'=>'bar',[1,2,3]=>'baz'}
-   => {"str"=>"bar", [1, 2, 3]=>"baz"}
-  2.1.6 :009 > JSON.dump(obj)
-   => "{\"str\":\"bar\",\"[1, 2, 3]\":\"baz\"}"
-  2.1.6 :010 > JSON.parse(JSON.dump(obj))
-   => {"str"=>"bar", "[1, 2, 3]"=>"baz"}
-  2.1.6 :011 > JSON.parse(JSON.dump(obj)) == obj
-   => false
-
-## Considering YAML
+### Considering YAML
 
 YAML is strong where JSON is strong, and also strong in many places
 where JSON is weak.  In fact, YAML includes JSON as a subformat:
@@ -146,8 +151,8 @@ non-string hash keys:
    => true
 
 Note: YAML's support for Symbols is due to Psych, not strictly the
-YAML format itself.  I've taken both YAML.dump(:foo) and
-YAML.dump(':foo') into Python and done yaml.load() on them.  Both
+YAML format itself.  I've taken both `YAML.dump(:foo)` and
+`YAML.dump(':foo')` into Python and done `yaml.load()` on them.  Both
 result in ':foo'.  So this nicety is not portable.
 
 But YAML still has some shortcomings:
@@ -157,10 +162,18 @@ But YAML still has some shortcomings:
 - unclear whether available parsers support stream processing
 - DAGs and cycles of Arrays and Hash are handled, but Strings are not.
 
-## Considering FRIZZY
+### Considering FRIZZY
 
-FRIZZY is a home-grown serialization format.  The name "FRIZZY"
-means nothing.
+FRIZZY is a home-grown serialization format which I ended up commiting
+to for OAK.
+
+The name FRIZZY means nothing, and survives only as the rogue `F`
+character at the start of a serialized object:
+
+```
+.1.6 :006 > OAK.encode('Hello, World!',redundancy: :none,format: :none)
+ => "oak_3NNN_0_20_F1SU13_Hello, World!_ok"
+```
 
 Advantages:
 
@@ -178,14 +191,17 @@ Disadvantages:
 I decided to reinvent the wheel and go with FRIZZY.  We have
 discovered Summaries which are DAGs on strings.  It might be
 acceptable to lose that information but I did not want to *prove* it
-was acceptable to lose that information.  It may have been an
-ego-driven sin to go custom here, but I did not want to pessimize
-future use cases on fidelity or control.
+was acceptable to lose that information.
+
+It may have been an ego-driven sin to go custom here, but I did not
+want to pessimize future use cases on fidelity or control.
 
 
-########### Compression Choices ############################################
+## Compression Choices
 
-## Considering LZO, LZF, and LZ4.
+A survey of alternatives considered for the compression layer.
+
+### Considering LZO, LZF, and LZ4.
 
 These compression formats are similar in performance and algorithm.
 All are in the Lempel-Ziv family of dictionary-based
@@ -204,7 +220,7 @@ like the way to be.
 Based on previous experience, I expect this to be a clear win for
 use in Redis caches vs being uncompressed.
 
-## Considering ZLIB
+### Considering ZLIB
 
 Including ZLIB felt like a no-brainer.  ZLIB is familiar,
 widely-deployed, and standardized in RFC 1951.  It uses the L-Z
@@ -216,7 +232,7 @@ dominated by either LZ4 for low-latency applications or BZIP2 for
 archival applications, but I'm including it for comparisons and
 because it would feel strage not to.
 
-## Considering BZIP2
+### Considering BZIP2
 
 BZIP2 is an aggressive compression which uses the Burrows–Wheeler,
 move-to-front, and run-length-encoding transforms with Huffman It
@@ -230,7 +246,7 @@ Based on previous experience, I expect this option will dominate
 where data is generally cold or where storage is very expensive
 compared to CPU.
 
-## Considering LZMA
+### Considering LZMA
 
 LZMA is the Lempel-Ziv-Markov chains algorithm.  It will be an order
 of magnitude more expensive to compress than BZIP2, but will
@@ -247,14 +263,14 @@ am including it - if only so we can rule it out by demonstration
 rather than hypothesis.
 
 
-########### Encryption #####################################################
+## Encryption Choices
 
-This is the first extension of OAK since it went live in
+Encryption is the first extension of OAK since it went live in
 Prosperworks's Redis layer on 2016-06-02 and in the S3
 Correspondence bodies since 2016-07-06.  There have been only
 Rubocop updates and nary a bugfix since 2016-07-01.
 
-## Encryption-in-OAK Design Decisions (see arch doc for discussion):
+### Encryption-in-OAK Design Decisions (see arch doc for discussion):
 
 - Encryption is the only change in OAK_4.
 - OAK_4 will only support AES-256-GCM with random IVs chosen for
@@ -270,7 +286,7 @@ Rubocop updates and nary a bugfix since 2016-07-01.
   - Via an ENV-specified key chain.
   - Can hold multiple master keys.
 
-## Encryption-in-OAK Backward Compatibility
+### Encryption-in-OAK Backward Compatibility
 
 Before encryption was added, the format identifier for OAK strings
 was 'oak_3'.
@@ -282,7 +298,7 @@ The legacy 'oak_3' are still supported both on read and on write.
 
 By default, 'oak_4' is used only when encryption is requested.
 
-## Encryption-in-OAK Regarding Compression vs Encryption
+### Encryption-in-OAK Regarding Compression vs Encryption
 
 Note that compression of encrypted strings is next to useless.  By
 design, encryption algorithms obscure exploitable redundancy in
@@ -292,8 +308,8 @@ On the other hand, in the wild there have been a handful of
 successful chosen-plaintext attacks on compress-then-encrypt
 encodings.  See:
 
-  https://blog.appcanary.com/2016/encrypt-or-compress.html
-  https://en.wikipedia.org/wiki/CRIME
+- https://blog.appcanary.com/2016/encrypt-or-compress.html
+- https://en.wikipedia.org/wiki/CRIME
 
 OAK_4 supports compression and does compression-then-encryption.
 
@@ -301,5 +317,3 @@ The extremely paranoid are encouraged to use compression: :none.
 Note however that the source data may be compressed.  Furthermore,
 for larger objects FRIZZY itself is, in part, a compression
 algorithm.
-
-############################################################################

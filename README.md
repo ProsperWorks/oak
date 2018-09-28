@@ -31,12 +31,6 @@ Consider OAK if you are dealing with content at scale and are not
 quite happy with JSON, YAML, XML, or Ruby's Marshal format.  Disregard
 OAK your needs are all met by JSON.
 
-TODO: import design docs here
-
-TODO: edit comments way, way down
-
-TODO: rdoc?
-
 ## Using in Ruby
 ```
 2.1.6 :001 > require 'oak'
@@ -92,3 +86,27 @@ For more details.
 
 - [Changelog](CHANGELOG.md)
 - [Design Desiderata](DESIDERATA.md)
+
+## TODO: packaging
+
+- import design docs here
+  - https://docs.google.com/document/d/10HVWuQzCw1Whc-czDChwsWPEZRLfyPS7F-dkjHWsIs4
+  - https://docs.google.com/document/d/1J7GBEJUPI3UeftJ4C-w3pbBUzk1pU0Sr6zcXufEi7NI
+  - https://docs.google.com/document/d/1SeOO18uqdDtHuB8tZ4-_2sql0Yiaco5J1PWdiu6gmAY
+- edit comments down
+- rdoc
+
+## Possible Future Directions for the Format
+
+- Float representation.
+  - Manifest precision?
+  - Limited precision?
+  - But somehow do better than just `Float#to_s`!
+- Streamability and embedability.
+  - Support encoders and decoders which have only fixed-size buffers.
+- Portability.
+  - Was support for Symbols distinct from Strings too Ruby-esque?
+  - Native implementation.
+- Error-correction coding.
+  - There seem to be little or no "standard" algorithms out there, at
+    least not as used by the Ruby community.
