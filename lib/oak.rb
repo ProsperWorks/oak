@@ -9,127 +9,27 @@
 require_relative 'oak/version'
 require          'contracts'  # TODO: cut
 #
-# We depend on other gems, but for performance they are only required
-# on demand:
+# Many of our dependencies are used in only some flows.  We load them
+# via Kernel#autoload to shave time in bin/oak.rb on executions when
+# we just do a couple encodings or decodings and only with 1 set of
+# encoding options.
 #
-#   strscan
-#   digest
-#   base64
-#   lz4-ruby
-#   zlib
-#   bzip2/ffi
-#   lzma
-#   openssl
+# This reduces the runtime of 'bin/oak.rb --help' from 0.57s to 0.16s
+# in tests on my Mac.  0.5s per invocation is kind of a big deal.
 #
-# By not loading these up front, we save about 0.5s on simple
-# invocation of bin/oak.rb which only exercise one or two paths here.
+# This optimization only helps quick CLI invocations.  Fortunately,
+# longer-lived processes which use all the options are not hurt by
+# this.  With both greedy Kernel#require and lazy Kernel#autoload I
+# saw ~26s for 'make clean && time -p make test'.
 #
-
-# 'make clean && time bundle exec make test' without greedy require reports:
-#
-#   real 1m19.045s
-#   user 0m53.751s
-#   sys	 0m30.060s
-#
-# with greedy require reports:
-#
-#   real  1m17.119s
-#   user  0m54.063s
-#   sys   0m29.020s
-#
-# but back on master, with none of the lazy require, we get:
-#
-#   real 0m26.574s
-#   user 0m27.461s
-#   sys  0m5.107s
-#
-# ...and rake test in particular is clearly zippier.
-#
-# I repro with DO_GREEDY=true DO_LAZY=false DO_AUTO=false:
-#
-#   $ make clean && time bundle exec make test
-#   ...
-#   real 0m26.678s
-#   user 0m27.641s
-#   sys  0m5.006s
-#   $ bundle exec time -p bin/oak.rb --help > /dev/null
-#   real         0.31
-#   user         0.25
-#   sys          0.05
-#   $ time -p bundle exec bin/oak.rb --help > /dev/null
-#   real 0.76
-#   user 0.64
-#   sys 0.11
-#   $ time -p bin/oak.rb --help > /dev/null
-#   real 0.57
-#   user 0.48
-#   sys 0.09
-#
-# Trying again with DO_GREEDY=false DO_LAZY=true DO_AUTO=false:
-#
-#   $ make clean && time bundle exec make test
-#   ...
-#   real  1m13.949s
-#   user  0m51.341s
-#   sys   0m28.009s
-#   $ bundle exec time -p bin/oak.rb --help > /dev/null
-#   real         0.26
-#   user         0.21
-#   sys          0.04
-#   $ time -p bundle exec bin/oak.rb --help > /dev/null
-#   real 0.73
-#   user 0.61
-#   sys 0.11
-#   $ time -p bin/oak.rb --help > /dev/null
-#   real 0.16
-#   user 0.12
-#   sys 0.03
-#
-# Hey-hey, but with DO_GREEDY=false DO_LAZY=false DO_AUTO=true:
-#
-#   $ make clean && time bundle exec make test
-#   ...
-#   real 0m25.914s
-#   user 0m26.694s
-#   sys  0m4.778s
-#   $ bundle exec time -p bin/oak.rb --help > /dev/null
-#   real         0.27
-#   user         0.22
-#   sys          0.04
-#   $ time -p bundle exec bin/oak.rb --help > /dev/null
-#   real 0.72
-#   user 0.60
-#   sys 0.11
-#   $ time -p bin/oak.rb --help > /dev/null
-#   real 0.16
-#   user 0.12
-#   sys 0.03
-#
-# Best of both worlds?
-#
-DO_GREEDY = false
-DO_LAZY   = false
-DO_AUTO   = true
-if DO_GREEDY
-  require 'strscan'
-  require 'digest'
-  require 'base64'
-  require 'lz4-ruby'
-  require 'zlib'
-  require 'bzip2/ffi'
-  require 'lzma'
-  require 'openssl'
-end
-if DO_AUTO
-  autoload :StringScanner, 'strscan'
-  autoload :Digest,        'digest'
-  autoload :Base64,        'base64'
-  autoload :LZ4,           'lz4-ruby'
-  autoload :Zlib,          'zlib'
-  autoload :Bzip2,         'bzip2/ffi'
-  autoload :LZMA,          'lzma'
-  autoload :OpenSSL,       'openssl'
-end
+autoload :StringScanner, 'strscan'
+autoload :Digest,        'digest'
+autoload :Base64,        'base64'
+autoload :LZ4,           'lz4-ruby'
+autoload :Zlib,          'zlib'
+autoload :Bzip2,         'bzip2/ffi'
+autoload :LZMA,          'lzma'
+autoload :OpenSSL,       'openssl'
 
 # Some design desiderata with which I started this project.
 #
@@ -475,7 +375,6 @@ module OAK
   # Get a new instance of OpenSSL::Cipher for our algorithm.
   #
   def self.encryption_algo
-    require 'openssl' if DO_LAZY
     OpenSSL::Cipher.new(ENCRYPTION_ALGO_NAME)
   end
 
@@ -793,7 +692,6 @@ module OAK
   #
   Contract String => Any
   def self._deserialize(str)
-    require 'strscan' if DO_LAZY
     scanner      = StringScanner.new(str)
     serial_code  = scanner.scan(/F/)
     if 'F' != serial_code
@@ -1108,7 +1006,6 @@ module OAK
   #
   Contract String, Maybe[Hash] => String
   def self._unwrap(str,opts={})
-    require 'strscan' if DO_LAZY
     str         = str.b                   # str.b for dup to ASCII_8BIT
     sc          = StringScanner.new(str)
     ov          = sc.scan(/oak_[34]/)  or raise BAD_STR, "bad oak+ver"
@@ -1276,12 +1173,8 @@ module OAK
   def self._check(redundancy,str)
     case redundancy.to_s
     when 'none'        then return '0'
-    when 'crc32'       then
-      require 'zlib' if DO_LAZY
-      return '%d' % Zlib.crc32(str)
-    when 'sha1'        then
-      require 'digest' if DO_LAZY
-      return Digest::SHA1.hexdigest(str)
+    when 'crc32'       then return '%d' % Zlib.crc32(str)
+    when 'sha1'        then return Digest::SHA1.hexdigest(str)
     else
       raise ArgumentError, "unknown redundancy #{redundancy}"
     end
@@ -1303,7 +1196,6 @@ module OAK
       # If we were using Ruby 2.3+, we could use the option "padding:
       # false" instead of chopping out the /=*$/ with gsub.
       #
-      require 'base64' if DO_LAZY
       return Base64.urlsafe_encode64(str).gsub(/=.*$/,'')
     else
       raise ArgumentError, "unknown format #{format}"
@@ -1326,7 +1218,6 @@ module OAK
       # strict_encode64, and urlsafe_encode64 both with and without
       # the /=*$/.
       #
-      require 'base64' if DO_LAZY
       return Base64.decode64(str.tr('-_','+/'))
     else
       raise ArgumentError, "unknown format #{format}"
@@ -1386,7 +1277,6 @@ module OAK
   #
   def self._decrypt(encryption_key,data,auth_data)
     return data if !encryption_key
-    require 'openssl' if DO_LAZY
     iv_size            = ENCRYPTION_ALGO_IV_BYTES
     auth_tag_size      = ENCRYPTION_ALGO_AUTH_TAG_BYTES
     iv                 = data[0..(iv_size-1)]
@@ -1412,19 +1302,15 @@ module OAK
     when 'none'
       compressed  = str
     when 'lz4'
-      require 'lz4-ruby' if DO_LAZY
       compressed  = LZ4.compress(str)
     when 'zlib'
-      require 'zlib' if DO_LAZY
       compressed  = Zlib.deflate(str)
     when 'bzip2'
-      require 'bzip2/ffi' if DO_LAZY
       io          = StringIO.new
       io.set_encoding(Encoding::ASCII_8BIT)
       Bzip2::FFI::Writer.write(io, str)
       compressed  = io.string
     when 'lzma'
-      require 'lzma' if DO_LAZY
       compressed  = LZMA.compress(str)
     else
       raise ArgumentError, "unknown compression #{compression}"
@@ -1444,21 +1330,18 @@ module OAK
     when 'none'
       return str
     when 'lz4'
-      require 'lz4-ruby' if DO_LAZY
       begin
         return LZ4.uncompress(str)
       rescue LZ4Internal::Error => ex
         raise CantTouchThisStringError, "#{ex.class}: #{ex.message}"
       end
     when 'zlib'
-      require 'zlib' if DO_LAZY
       begin
         return Zlib::Inflate.inflate(str)
       rescue Zlib::DataError => ex
         raise CantTouchThisStringError, "#{ex.class}: #{ex.message}"
       end
     when 'bzip2'
-      require 'bzip2/ffi' if DO_LAZY
       io  = StringIO.new(str)
       raw = nil
       begin
@@ -1469,7 +1352,6 @@ module OAK
       str = raw.b # dupe to Encoding::ASCII_8BIT
       return str
     when 'lzma'
-      require 'lzma' if DO_LAZY
       begin
         raw = LZMA.decompress(str)
       rescue RuntimeError => ex
