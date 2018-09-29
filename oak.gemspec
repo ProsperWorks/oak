@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ['jhwillett']
   spec.email         = ['jhw@prosperworks.com']
 
-  spec.summary       = 'Envelope with performance and encryption tradeoffs.'
+  spec.summary       = 'Envelope format offering perf and encryption tradeoffs.'
   spec.homepage      = 'https://github.com/ProsperWorks/oak'
 
   spec.files         = `git ls-files -z`.split("\x0").reject do |f|
@@ -23,10 +23,7 @@ Gem::Specification.new do |spec|
 
   # Runtime dependencies.
   #
-  # TODO: trim these, especially 'contracts'.
-  #
   spec.add_runtime_dependency     'bzip2-ffi',   '~> 1.0.0'
-  spec.add_runtime_dependency     'contracts',   '~> 0.16.0'
   spec.add_runtime_dependency     'lz4-ruby',    '~> 0.3.3'
   spec.add_runtime_dependency     'optimist',    '~> 3.0.0'
   spec.add_runtime_dependency     'ruby-lzma',   '~> 0.4.3'

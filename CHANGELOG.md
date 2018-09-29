@@ -1,8 +1,9 @@
-## 0.4.1 (PENDING - TBD)
+## 0.4.1 (2018-09-28)
 
-- Open-sourced with MIT License.
-- Use `Kernel#autoload` instead of `require` to reduce min exec time.
 - `oak`, `oak.rb`, `enigma`, and `enigma.rb` published as executables from gem.
+- Removed heavier dep on `contracts`, switched to manual checks and looser spec.
+- Open-sourced with MIT License, published as https://rubygems.org/gems/oak!
+
 
 ## 0.4.0 (2018-09-24)
 
@@ -12,3 +13,12 @@
 - OAK3 emitted by default.
 - OAK4 with AES-256-GCM encryption with random IV supported.
 - ENIGMA
+
+
+## 0.0.3 (2011-11-07) and earlier
+
+- https://rubygems.org/gems/oak had an earlier incarnation as a
+  secret management utility, https://github.com/imonyse/oak.
+- Special thanks and regards to https://github.com/imonyse, who
+  generously released the gem name `oak` so it could have a second
+  life.
