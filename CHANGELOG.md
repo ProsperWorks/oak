@@ -2,6 +2,7 @@
 
 - `oak`, `oak.rb`, `enigma`, and `enigma.rb` published as executables from gem.
 - Removed heavier dep on `contracts`, switched to manual checks and looser spec.
+- Documentation reorg and cleanup.
 - Open-sourced with MIT License, published as https://rubygems.org/gems/oak!
 
 
