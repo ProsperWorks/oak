@@ -63,22 +63,50 @@ hello
 
 ## Using in Shell for Encryption
 ```
-$ bin/enigma.rb --keygen
+$ bin/oak.rb --key-generate
 oak_3CNB_2975186575_52_RjFTQTMyX00du8vD8WAikhLNgdnaOYtQV6uqyNqRz6modiEcJHOl_ok
-$ bin/enigma.rb --keygen
+$ bin/oak.rb --key-generate
 oak_3CNB_1324948677_52_RjFTQTMyXytCueDDTpEOusKkPMANgaA9zsJuvOend5DCIJWwJdjC_ok
-$ export ENIGMA_KEYS=foo,bar
-$ export ENIGMA_KEY_foo=oak_3CNB_2975186575_52_RjFTQTMyX00du8vD8WAikhLNgdnaOYtQV6uqyNqRz6modiEcJHOl_ok
-$ export ENIGMA_KEY_bar=oak_3CNB_1324948677_52_RjFTQTMyXytCueDDTpEOusKkPMANgaA9zsJuvOend5DCIJWwJdjC_ok
-$ echo hello | bin/enigma --encrypt
-oak_4foo_B59_Si1VQNhf1qZFS31cMVF1ijVcyGV4SUzgr_19QQ0FZ8MFIbIR0D8rT3Ao3W8_ok
-$ echo hello | bin/enigma --encrypt
-oak_4foo_B59_LLmwT44ZPWRqFsktyInJAa5L8haeVovJ_lbc05BgAfQXmMHAZdRXkx4nSj4_ok
-$ echo oak_4foo_B59_Si1VQNhf1qZFS31cMVF1ijVcyGV4SUzgr_19QQ0FZ8MFIbIR0D8rT3Ao3W8_ok | bin/enigma --decrypt
+$ export OAK_TEST_KEYS=foo,bar
+$ export OAK_TEST_KEY_foo=oak_3CNB_2975186575_52_RjFTQTMyX00du8vD8WAikhLNgdnaOYtQV6uqyNqRz6modiEcJHOl_ok
+$ export OAK_TEST_KEY_bar=oak_3CNB_1324948677_52_RjFTQTMyXytCueDDTpEOusKkPMANgaA9zsJuvOend5DCIJWwJdjC_ok
+$ echo hello | bin/oak.rb --mode encode-lines --redundancy none --key-chain OAK_TEST --key foo
+oak_4foo_B58_PhG1qWHfosOOWDgqMhVoZlEn6F16XC6KuL_1zN1aLWMmcZZgJ2Dz5XR-ag_ok
+$ echo hello | bin/oak.rb --mode encode-lines --redundancy none --key-chain OAK_TEST --key foo
+oak_4foo_B58_ms11iWDHrmwFJwGpNEsWMIXYfapO96e7yvfk5r8G-F1gRzt62FS_JFQbvw_ok
+$ echo hello | bin/oak.rb --mode encode-lines --redundancy none --key-chain OAK_TEST --key bar
+oak_4bar_B58_kV6FIE30v6xgdKwyzdmpxVzNCU2eWjt7ZiZTWUHsQxXG3cC8u0-VoE0hmQ_ok
+$ echo oak_4foo_B58_PhG1qWHfosOOWDgqMhVoZlEn6F16XC6KuL_1zN1aLWMmcZZgJ2Dz5XR-ag_ok | bin/oak.rb --mode decode-lines --key-chain OAK_TEST
 hello
-$ echo oak_4foo_B59_LLmwT44ZPWRqFsktyInJAa5L8haeVovJ_lbc05BgAfQXmMHAZdRXkx4nSj4_ok | bin/enigma --decrypt
+$ echo oak_4foo_B58_ms11iWDHrmwFJwGpNEsWMIXYfapO96e7yvfk5r8G-F1gRzt62FS_JFQbvw_ok | bin/oak.rb --mode decode-lines --key-chain OAK_TEST
+hello
+$ echo oak_4bar_B58_kV6FIE30v6xgdKwyzdmpxVzNCU2eWjt7ZiZTWUHsQxXG3cC8u0-VoE0hmQ_ok | bin/oak.rb --mode decode-lines --key-chain OAK_TEST
 hello
 ```
+
+OAK4 supports one and only one encryption algorithm and mode of
+operation:
+
+- AES-256-GCM
+  - 128 bits of security
+  - 256-bit keys      (32 bytes)
+  -  96-bit IVs       (12 bytes)
+  - 128-bit auth_tags (16 bytes)
+- Random IV ("Initialization Vector") used for each encryption operation.
+- All headers are authenticated.
+- All headers which are not required for decryption are encrypted.
+
+This is the only encryption option supported by OAK4.
+
+Because the GCM ([Galois/Counter Mode
+](https://en.wikipedia.org/wiki/Galois%2FCounter_Mode)) mode of
+operation is an [authenticated
+encryption](https://en.wikipedia.org/wiki/Authenticated_encryption),
+use of `--redundancy none` with encrypted OAK strings is recommended.
+The authentication of GCM is more than adequate to detect accidental
+transmission errors.  This recommendation may become the default in a
+future version.
+
 
 ## Further Reading
 
