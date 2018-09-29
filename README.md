@@ -32,6 +32,7 @@ quite happy with JSON, YAML, XML, or Ruby's Marshal format.  Disregard
 OAK your needs are all met by JSON.
 
 ## Using in Ruby
+
 ```
 2.1.6 :001 > require 'oak'
  => true
@@ -49,7 +50,33 @@ OAK your needs are all met by JSON.
  => {"one"=>1, "array"=>[true, false]}
 ```
 
+## Using in Ruby for Encryption
+
+```
+2.1.6 :001 > require 'oak'
+ => true
+2.1.6 :002 > key_chain = OAK::KeyChain.new({ 'a' => OAK::Key.new(OAK.random_key), 'b' => OAK::Key.new(OAK.random_key) })
+ => #<OAK::KeyChain:0x007faa700b8458 @keys={"a"=>#<OAK::Key:0x007faa700b89a8 @key=ELIDED>, "b"=>#<OAK::Key:0x007faa700b86d8 @key=ELIDED>}>
+2.1.6 :003 > OAK.encode("Hello, World!",key_chain: key_chain, key: 'a')
+ => "oak_4a_B82_4iauuiFq7XQvcDCwmmXhDxL_Wp3_T765qM-S094uNJ4xtj_DxQuXGSMmqlcxPXz-_cYZdE6bFbEAQCHpiQ_ok"
+2.1.6 :004 > OAK.encode("Hello, World!",key_chain: key_chain, key: 'a')
+ => "oak_4a_B82_YeeAEOLPlGchlDkoSnif7G38uJAPaNQ2ozsx6Mcb7PybpsL-ljVmGa5sRbgaqFw4R5iOXNw_sOesolTB4g_ok"
+2.1.6 :005 > OAK.encode("Hello, World!",key_chain: key_chain, key: 'b')
+ => "oak_4b_B82_HA1O3v5UrpV81UC0fAaUQ_8tsLUxbMG6bMupcQaZNKMU3XL3Tz9zj8TaVb4nvv3s0UhxFg3q9lmFIplvnQ_ok"
+2.1.6 :006 > OAK.decode("oak_4b_B82_HA1O3v5UrpV81UC0fAaUQ_8tsLUxbMG6bMupcQaZNKMU3XL3Tz9zj8TaVb4nvv3s0UhxFg3q9lmFIplvnQ_ok",key_chain: key_chain)
+ => "Hello, World!
+2.1.6 :007 > OAK.decode("oak_4b_B82_HA1O3v5UrpV81UC0fAaUQ_8tsLUxbMG6bMupcQaZNKMU3XL3Tz9zj8TaVb4nvv3s0UhxFg3q9lmFIplvnQ_ok")
+OAK::CantTouchThisStringError: key b but no key_chain
+        from ...
+```
+
 ## Using in Shell
+
+Non-encrypted OAK default to OAK3.  Unencrypted OAK4 is available
+optionally.  They are generally the same size and equivalent:
+unencrypted OAK4 is generally only used for debugging and getting a
+peek at what happens "under the encryption".
+
 ```
 $ echo hello | bin/oak --mode encode-file
 oak_3CNB_911092726_16_RjFTVTZfaGVsbG8K_ok
@@ -59,9 +86,16 @@ $ echo hello | bin/oak --mode encode-file --compression lz4 --force true
 oak_3C4B_911092726_19_DMBGMVNVNl9oZWxsbwo_ok
 $ echo oak_3C4B_911092726_19_DMBGMVNVNl9oZWxsbwo_ok | bin/oak --mode decode-file
 hello
+$ echo hello | bin/oak.rb --mode encode-lines --redundancy none --format none
+oak_3NNN_0_11_F1SU5_hello_ok
+$ echo hello | bin/oak.rb --mode encode-lines --redundancy none --format none --force-oak-4
+oak_4_N15_NN0_F1SU5_hello_ok
 ```
 
 ## Using in Shell for Encryption
+
+Encryption is supported by OAK4.
+
 ```
 $ bin/oak.rb --key-generate
 oak_3CNB_2975186575_52_RjFTQTMyX00du8vD8WAikhLNgdnaOYtQV6uqyNqRz6modiEcJHOl_ok
@@ -83,7 +117,6 @@ hello
 $ echo oak_4bar_B58_kV6FIE30v6xgdKwyzdmpxVzNCU2eWjt7ZiZTWUHsQxXG3cC8u0-VoE0hmQ_ok | bin/oak.rb --mode decode-lines --key-chain OAK_TEST
 hello
 ```
-
 OAK4 supports one and only one encryption algorithm and mode of
 operation:
 
