@@ -960,6 +960,19 @@ module OAK
       cipher.auth_tag  = auth_tag
       cipher.auth_data = auth_data
       cipher.update(ciphertext) + cipher.final
+    rescue ArgumentError => ex
+      #
+      # Some of our tests of corrupting OAK strings lead to incorrect
+      # parses which cause the data passed to this method to be
+      # shorter than ENCRYPTION_ALGO_IV_BYTES.
+      #
+      # In ruby <= 2.2.7 (w/ openssl 1.1.0), these truncated IVs
+      # result in OpenSSL::Cipher::CipherError from cipher.update().
+      #
+      # In ruby >= 2.4.3 (w/ openssl 2.0.5), truncated IVs result in
+      # ArgumentError in cipher.iv=().
+      #
+      raise CantTouchThisStringError, "#{ex.class}: #{ex.message}"
     rescue OpenSSL::Cipher::CipherError => ex
       raise CantTouchThisStringError, "#{ex.class}: #{ex.message}"
     end
