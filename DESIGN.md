@@ -200,7 +200,6 @@ useless bytes to keep the number of meta-data field constant.
 Advantages:
 
 * Encodes in only 2 bytes.
-
 * OAK will still catch truncation errors.
 
 Disadvantages:
