@@ -1,7 +1,8 @@
 # oak
 
-OAK is an encoding format with enough polymorphism to support run-time
-performance experimentation and some light encryption-at-rest.
+OAK is a serialization format for Ruby primitives which supports
+performance experimentation via a limited suite of built-in
+compression, checksumming, and encryption options.
 
 OAK supports built-in switchability between common algorithms:
 
