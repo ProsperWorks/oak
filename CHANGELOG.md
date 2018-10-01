@@ -4,6 +4,7 @@
 - Fix exception type bug in ruby >= 2.3 and openssl >= 2.0.0 when
   parsing some corrupt encrypted data.
 - Updated .travis.yml to update and expand the versions of Ruby covered.
+- Migrate DESIGN.md and ENCRYPTION.md in from Google Docs.
 
 
 ## 0.4.1 (2018-10-01)
