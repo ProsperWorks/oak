@@ -13,7 +13,6 @@
 - Not open (yet).
 - OAK3 emitted by default.
 - OAK4 with AES-256-GCM encryption with random IV supported.
-- ENIGMA
 
 
 ## 0.0.3 (2011-11-07) and earlier
