@@ -1,3 +1,8 @@
+## 0.4.2 (TBD)
+
+- `oak`, `oak.rb` patched to play nicer with bundler
+
+
 ## 0.4.1 (2018-10-01)
 
 - `oak`, `oak.rb` published as executables from gem.
