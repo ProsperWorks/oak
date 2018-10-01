@@ -1,33 +1,55 @@
 # OAK: Encryption-in-OAK
 
-OAK is a serialization and envelope format which encodes simple Ruby objects as strings.  It bundles together a variety of well-understood encoding libraries into a succinct self-describing package.
+OAK is a serialization and envelope format which encodes simple Ruby
+objects as strings.  It bundles together a variety of well-understood
+encoding libraries into a succinct self-describing package.
 
-OAK v3 was first described in [OAK: The Object ArKive](https://docs.google.com/document/d/10HVWuQzCw1Whc-czDChwsWPEZRLfyPS7F-dkjHWsIs4/).
+OAK v3 was first described in [OAK: The Object ArKive](DESIGN.md).
 
-Since 2017-09-13, OAK has been used by ALI for volatile caches in Redis, and for durable Correspondence bodies in S3.
+Since 2017-09-13, OAK has been used by ALI for volatile caches in
+Redis, and for durable Correspondence bodies in S3.
 
-In Q4 2017 I evaluated, then set aside, the possibility of adding encryption features to OAK.  The motive then was to encrypt our volatile caches in Redis, for which our hosting provider offers no encryption-at-rest.  This plan was eventually scrapped because we decided we didn't need it and because I learned enough about modern encryption to see that my plan was off track.
+In Q4 2017 I evaluated, then set aside, the possibility of adding
+encryption features to OAK.  The motive then was to encrypt our
+volatile caches in Redis, for which our hosting provider offers no
+encryption-at-rest.  This plan was eventually scrapped because we
+decided we didn't need it and because I learned enough about modern
+encryption to see that my plan was off track.
 
-In Q3 2018 I am updating and simplifying that plan to to support encryption of secrets.
+In Q3 2018 I am updating and simplifying that plan to to support
+encryption of secrets.
 
-Author:		[jhw@prosperworks.com](mailto:jhw@prosperworks.com)
+Author:
+- [jhw@prosperworks.com](mailto:jhw@prosperworks.com)
 
-Advisors:	[isaac@prosperworks.com](mailto:isaac@prosperworks.com)
+Advisors:
+- [isaac@prosperworks.com](mailto:isaac@prosperworks.com)
+- [rrastogi@prosperworks.com](mailto:rrastogi@prosperworks.com)
+- [clake@prosperworks.com](mailto:clake@prosperworks.com)
 
-		[rrastogi@prosperworks.com](mailto:rrastogi@prosperworks.com)
+Things get tricky with symmetric encryption. The *identity* of our
+encryption keys must be communicated from **OAK.encode** to
+**OAK.decode**, but they cannot be explicitly present in the OAK
+string itself.
 
-		[clake@prosperworks.com](mailto:clake@prosperworks.com)
+Absent encryption, **OAK.decode** is nice unary pure function on OAK
+strings.  But to support decryption, **OAK.decode** cannot *only* look
+at the OAK string to effect a decode.  It must also have a
+side-channel for secrets.  It degenerates to a binary function which
+also must be passed a table of available encryption keys.
 
-Things get tricky with symmetric encryption. The *identity* of our encryption keys must be communicated from **OAK.encode** to **OAK.decode**, but they cannot be explicitly present in the OAK string itself.
+In anticipation of key migration, OAK works with a dictionary of
+multiple named keys.  **OAK.encode** records the encryption key (if
+any) in the OAK string, and **OAK.decode** uses the key to select the
+proper secrets from the keychain table.
 
-Absent encryption, **OAK.decode** is nice unary pure function on OAK strings.  But to support decryption, **OAK.decode** cannot *only* look at the OAK string to effect a decode.  It must also have a side-channel for secrets.  It degenerates to a binary function which also must be passed a table of available encryption keys.
+Furthermore, sound encryption practice with streaming modes demands we
+include random noise at the start of each encrypted stream.  Hence,
+**OAK.encode** degrades from a pure function to be nondeterministic.
 
-In anticipation of key migration, OAK works with a dictionary of multiple named keys.  **OAK.encode** records the encryption key (if any) in the OAK string, and **OAK.decode** uses the key to select the proper secrets from the keychain table.
+Here's a sneak preview of some OAK encryption:
 
-Furthermore, sound encryption practice with streaming modes demands we include random noise at the start of each encrypted stream.  Hence, **OAK.encode** degrades from a pure function to be nondeterministic.
-
-Here’s a sneak preview of some OAK encryption:
-
+```
 $ export TOE_KEYS=foo,bar                                      **# set up a key chain with 1 keys**
 
 $ export TOE_KEY_foo=oak_3CNB_3725491808_52_RjFTQTMyX0qAlJNbIK4fwYY0kh5vNKF5mMpHK-ZBZkfFarRjVPxS_ok
@@ -157,6 +179,7 @@ The header fields are authenticated, even the ones which are presented in plaint
 **          71                                                # in-between part**
 
 **             HlcP…**                                         # **authenticated-and-plaintext part**
+```
 
 ## OAK Encryption History
 
@@ -202,30 +225,69 @@ The header fields are authenticated, even the ones which are presented in plaint
 
 ## JHW Revisits Encryption-in-OAK 2018-07-15
 
-[oak-openssl-ciphers](https://github.com/ProsperWorks/ALI/pull/5434)  was originally prepared against [minor_2017_10_mystic](https://github.com/ProsperWorks/ALI/pull/5930) and presented in Arch Review 2017-09-18.  It never merged because feedback and further research raised many questions.  In particular, the IV is much more delicate than I originally understood.
+[oak-openssl-ciphers](https://github.com/ProsperWorks/ALI/pull/5434)
+was originally prepared against
+[minor_2017_10_mystic](https://github.com/ProsperWorks/ALI/pull/5930)
+and presented in Arch Review 2017-09-18.  It never merged because
+feedback and further research raised many questions.  In particular,
+the IV is much more delicate than I originally understood.
 
-Per expert recommendations, GCM and CBC are the two more viable stream modes.  Of them, GCM is much more sensitive to accidental IV reuse.  So much so, that GCM is not recommended in the absence of a fully automated IV management.
+Per expert recommendations, GCM and CBC are the two more viable stream
+modes.  Of them, GCM is much more sensitive to accidental IV reuse.
+So much so, that GCM is not recommended in the absence of a fully
+automated IV management.
 
-**At ProsperWorks’ current level of organization I believe the only credible option is CBC or GCM with a random IV selected for every message. **
+**At ProsperWorks’ current level of organization I believe the only
+credible option is CBC or GCM with a random IV selected for every
+message. **
 
-Therefore **encrypted OAK will be nondeterministic in the plaintext**.  This is a bummer but I see no way to avoid it without compromising security.
+Therefore **encrypted OAK will be nondeterministic in the plaintext**.
+This is a bummer but I see no way to avoid it without compromising
+security.
 
-Also, today I see no point in supporting anything other than AES.  All of AES-128, AES-192, and AES-256 are probably adequate for our needs, but if we support just AES-256 then we don’t have to answer any thorny questions.  There too much securit downside in letting the caller pick any old block cipher or mode of operation which is supported by OpenSSL.  This outweighs any ambition to future-proof OAK by offering open-ended support.
+Also, today I see no point in supporting anything other than AES.  All
+of AES-128, AES-192, and AES-256 are probably adequate for our needs,
+but if we support just AES-256 then we don’t have to answer any thorny
+questions.  There too much securit downside in letting the caller pick
+any old block cipher or mode of operation which is supported by
+OpenSSL.  This outweighs any ambition to future-proof OAK by offering
+open-ended support.
 
-GCM not only encrypts, but authenticates.  It is an [AEAD](https://en.wikipedia.org/wiki/Authenticated_encryption) and we can authenticate all the headers, including those which are transmitted in plaintext.
+GCM not only encrypts, but authenticates.  It is an
+[AEAD](https://en.wikipedia.org/wiki/Authenticated_encryption) and we
+can authenticate all the headers, including those which are
+transmitted in plaintext.
 
-Therefore, **OAK_4 will support only ****AES-256-GCM**** with a random IV selected each time a message is encrypted**.  OAK_4 keys will be 32 byte random binary strings.  OAK_4 IVs will be 12 byte binary strings which are encoded into each OAK string.  OAK_4 will use no salt other than the random IV for each encryption
+Therefore, **OAK_4 will support only ****AES-256-GCM**** with a random
+IV selected each time a message is encrypted**.  OAK_4 keys will be 32
+byte random binary strings.  OAK_4 IVs will be 12 byte binary strings
+which are encoded into each OAK string.  OAK_4 will use no salt other
+than the random IV for each encryption
 
 **OAK_4 will allow compression within encryption.**
 
-**OAK_4 will encrypt all OAK header fields except those which are necessary to support decryption.**  Yes, [Kerckhoffs's Principle](https://en.wikipedia.org/wiki/Kerckhoffs%27s_principle), but also [Precautionary Principle](https://en.wikipedia.org/wiki/Precautionary_principle).  To be transmitted plain: the format and version identifiers "oak_4", the format code (base64 or none), the name of  the key used, and the redundancy check for the *encrypted* message.
+**OAK_4 will encrypt all OAK header fields except those which are
+necessary to support decryption.** Yes, [Kerckhoffs's
+Principle](https://en.wikipedia.org/wiki/Kerckhoffs%27s_principle),
+but also [Precautionary
+Principle](https://en.wikipedia.org/wiki/Precautionary_principle).  To
+be transmitted plain: the format and version identifiers "oak_4", the
+format code (base64 or none), the name of the key used, and the
+redundancy check for the *encrypted* message.
 
-OAK_4 will also support authentication via GCM.  "oak_4", the encryption key name, and the format flag will be authenticated but transmitted plain.  All the encrypted fields are also authenticated.  We can save space by skipping redundancy flags in encrypted OAK_4 sequences.
+OAK_4 will also support authentication via GCM.  "oak_4", the
+encryption key name, and the format flag will be authenticated but
+transmitted plain.  All the encrypted fields are also authenticated.
+We can save space by skipping redundancy flags in encrypted OAK_4
+sequences.
 
 ## Appendix: Abandoned 2018-09-18 Proposal
 
-In the original proposal, each "key" included an algorithm identifier and a fixed initialization vector.  All symmetric encryption supported by OpenSSL::Cipher was supported.  No AEAD was supported.  Each key is actually a tuple which can capture any OpenSSL::Cipher:
-
+In the original proposal, each "key" included an algorithm identifier
+and a fixed initialization vector.  All symmetric encryption supported
+by OpenSSL::Cipher was supported.  No AEAD was supported.  Each key is
+actually a tuple which can capture any OpenSSL::Cipher:
+```
 >> key_chain.keys['keyB'].algo
 
 => "**blowfish**"
@@ -237,9 +299,11 @@ In the original proposal, each "key" included an algorithm identifier and a fixe
 >> key_chain.keys['keyB'].iv.unpack('H*')
 
 => ["**335e57d284405847**"]
-
-When encryption is used, OAK bumps up from **oak_3** to **oak_4**.  A new field is added between the flags field and the checksum field which cap, for instance:
-
+```
+When encryption is used, OAK bumps up from **oak_3** to **oak_4**.  A
+new field is added between the flags field and the checksum field
+which cap, for instance:
+```
 >> OAK.encode('Hi!')                                  # oak_3 plain 
 
 => "**oak_3CNB_3215496900_12_RjFTVTNfSGkh_ok"**
@@ -251,8 +315,10 @@ When encryption is used, OAK bumps up from **oak_3** to **oak_4**.  A new field 
 >> OAK.encode('Hi!',key_chain: key_chain,key: 'keyA') # oak_4 encrypted   
 
 => "**oak_4CNB_keyA_1533996014_22_kh4vYcyF8apY8LrgFPLN5Q_ok"**
-
-Unencrypted oak_4 is indicated with encryption key name **"0".  **So that key names will fit succinctly into the parse scheme, key names are constrained to **/^[a-zA-Z]$/**.
+```
+Unencrypted oak_4 is indicated with encryption key name **"0".  **So
+that key names will fit succinctly into the parse scheme, key names
+are constrained to **/^[a-zA-Z]$/**.
 
 ## Appendix: Changes Consequent to First Arch Review + Research
 
@@ -534,7 +600,24 @@ The design principles for all configurations here are essentially the same as th
 
 The following is my default starting configuration, designed to offer strong security as well as good performance:
 
-ECDHE-ECDSA-AES128-GCM-SHA256ECDHE-ECDSA-AES256-GCM-SHA384ECDHE-ECDSA-AES128-SHAECDHE-ECDSA-AES256-SHAECDHE-ECDSA-AES128-SHA256ECDHE-ECDSA-AES256-SHA384ECDHE-RSA-AES128-GCM-SHA256ECDHE-RSA-AES256-GCM-SHA384ECDHE-RSA-AES128-SHAECDHE-RSA-AES256-SHAECDHE-RSA-AES128-SHA256ECDHE-RSA-AES256-SHA384DHE-RSA-AES128-GCM-SHA256DHE-RSA-AES256-GCM-SHA384DHE-RSA-AES128-SHADHE-RSA-AES256-SHADHE-RSA-AES128-SHA256DHE-RSA-AES256-SHA256
+- ECDHE-ECDSA-AES128-GCM-SHA256
+- ECDHE-ECDSA-AES256-GCM-SHA384
+- ECDHE-ECDSA-AES128-SHA
+- ECDHE-ECDSA-AES256-SHA
+- ECDHE-ECDSA-AES128-SHA256
+- ECDHE-ECDSA-AES256-SHA384
+- ECDHE-RSA-AES128-GCM-SHA256
+- ECDHE-RSA-AES256-GCM-SHA384
+- ECDHE-RSA-AES128-SHA
+- ECDHE-RSA-AES256-SHA
+- ECDHE-RSA-AES128-SHA256
+- ECDHE-RSA-AES256-SHA384
+- DHE-RSA-AES128-GCM-SHA256
+- DHE-RSA-AES256-GCM-SHA384
+- DHE-RSA-AES128-SHA
+- DHE-RSA-AES256-SHA
+- DHE-RSA-AES128-SHA256
+- DHE-RSA-AES256-SHA256
 
 JHW Note: ^^^ Of course that recommendation is for a web site, not for cold storage.
 

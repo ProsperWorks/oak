@@ -2,47 +2,54 @@
 
 ## All that to avoid JSON?
 
-OAK is a serialization and envelope format which encodes simple Ruby objects as strings.  It bundles together a variety of well-understood encoding libraries into a succinct self-describing package.
+OAK is a serialization and envelope format which encodes simple Ruby
+objects as strings.  It bundles together a variety of well-understood
+encoding libraries into a succinct self-describing package.
 
-This document covers the existing OAK format, and proposed encryption extension.
+This document covers the existing OAK format, and proposed encryption
+extension.
 
-OAK compares to JSON, YAML, and Marshal.  OAK is more precise than JSON or YAML, but slightly more Ruby-esque, and supports fewer types than Marshal.  OAK also has features similar to OpenPGP ([https://tools.ietf.org/html/rfc4880](https://tools.ietf.org/html/rfc4880)) (though not, so far, encryption).
+OAK compares to JSON, YAML, and Marshal.  OAK is more precise than
+JSON or YAML, but slightly more Ruby-esque, and supports fewer types
+than Marshal.  OAK also has features similar to OpenPGP
+([https://tools.ietf.org/html/rfc4880](https://tools.ietf.org/html/rfc4880))
+(though not, so far, encryption).
 
-The main value proposition for OAK is operational flexibility.  OAK leds you defer choices between compression, checksumming, and 7-bit cleanliness algorithms until after a system is live and under load.
+The main value proposition for OAK is operational flexibility.  OAK
+leds you defer choices between compression, checksumming, and 7-bit
+cleanliness algorithms until after a system is live and under load.
 
-As of 2017-09-13, OAK is used by ALI for volatile caches in Redis, and for durable Correspondence bodies in S3.
+As of 2017-09-13, OAK is used by ALI for volatile caches in Redis, and
+for durable Correspondence bodies in S3.
 
-Author:		[jhw@prosperworks.com](mailto:jhw@prosperworks.com)
+Author:
+- [jhw@prosperworks.com](mailto:jhw@prosperworks.com)
 
-Advisors:	[marshall@prosperworks.com](mailto:marshall@prosperworks.com)
+Advisors:
+- [marshall@prosperworks.com](mailto:marshall@prosperworks.com)
+- [gerald@prosperworks.com](mailto:gerald@prosperworks.com)
+- [kelly@prosperworks.com](mailto:kelly@prosperworks.com)
+- [neil@prosperworks.com](mailto:neil@prosperworks.com)
 
-[gerald@prosperworks.com](mailto:gerald@prosperworks.com)
-
-[kelly@prosperworks.com](mailto:kelly@prosperworks.com)
-
-[neil@prosperworks.com](mailto:neil@prosperworks.com)
-
-Here’s a sneak preview of some OAK strings:
-
+Here is a sneak preview of some OAK strings:
+```
 $ echo 'HelloWorld!' | bin/oak.rb --format none
+**oak_3CNN_1336599037_18_F1SU11_HelloWorld!_ok**
 
-**oak_3CNN_1336599037_18_F1SU11_HelloWorld**!_ok
-
-$ echo 'HelloWorld!' | bin/oak.rb
-
+$ echo 'HelloWorld!' | bin/oak.rb
 **oak_3CNB_1336599037_24_RjFTVTExX0hlbGxvV29ybGQh_ok**
 
 $ echo 'HelloWorld!' | bin/oak.rb --compression lz4 --force
-
 **oak_3C4B_1336599037_28_EvADRjFTVTExX0hlbGxvV29ybGQh_ok**
 
 $ echo 'HelloWorld!' | bin/oak.rb | bin/oak.rb --mode decode-lines
-
 **HelloWorld!**
+```
 
 ## OAK Version History
 
-OAK has been live for 16 months by the time this arch document was prepared retroactively.
+OAK has been live for 16 months by the time this arch document was
+prepared retroactively.
 
 * [https://github.com/ProsperWorks/ALI/pull/1245](https://github.com/ProsperWorks/ALI/pull/1245) **oak**
 
@@ -110,58 +117,55 @@ See also [OAK: Encryption-in-OAK](https://docs.google.com/document/d/1J7GBEJUPI3
 
 ## Overview of OAK strings.
 
-**OAK.encode** includes a manifest of its options explicitly in the OAK string output.  There is no need for an options back channel to **OAK.decode**.  
+**OAK.encode** includes a manifest of its options explicitly in the
+OAK string output.  There is no need for an options back channel to
+**OAK.decode**.
 
-We could encode every OAK string with different options, and **OAK.decode** can reverse all of them with no extra info.
+We could encode every OAK string with different options, and
+**OAK.decode** can reverse all of them with no extra info.
 
+```
 >> OAK.encode('HelloWorld',redundancy: :none)
-
 => "**oak_3NNB_0_23_RjFTVTEwX0hlbGxvV29ybGQ_ok**"
 
 >> OAK.encode('HelloWorld',format: :none,redundancy: :none)
-
 => "**oak_3NNN_0_17_F1SU10_HelloWorld_ok**"
 
 >> OAK.encode('HelloWorld',compression: :zlib,force: true)
-
 => "**oak_3CZB_3789329355_34_eJxzMwwONTSI90jNyckPzy_KSQEAL2gF3A_ok**"
 
 >> OAK.decode(OAK.encode('HelloWorld',redundancy: :none))
-
 => "**HelloWorld**"
 
 >> OAK.decode(OAK.encode('HelloWorld',format: :none,redundancy: :none))
-
 => "**HelloWorld**"
 
 >> OAK.decode(OAK.encode('HelloWorld',compression: :zlib,force: true))
-
 => "**HelloWorld**"
+```
 
-We use this to defer our choice of time-space tradeoffs until runtime.  **Caches::RedisCache** in **lib/caches/redis_cache.rb** enshrines this pattern by parsing OAK options from the ENV:
+We use this to defer our choice of time-space tradeoffs until runtime.
+**Caches::RedisCache** in **lib/caches/redis_cache.rb** enshrines this
+pattern by parsing OAK options from the ENV:
 
 # in Caches::RedisCache#_serialize
 
-#
-
+```
 OAK.encode(
-
  pre_obj,
-
  redundancy:  (ENV["CACHE_OAK_REDUNDANCY_#{name}"] || 'sha1').intern,
-
  compression: (ENV["CACHE_OAK_COMPRESSION_#{name}"]|| 'bzip2').intern,
-
  force:       (ENV["CACHE_OAK_FORCE_#{name}"]      == 'true'),
-
  format:      (ENV["CACHE_OAK_FORMAT_#{name}"]     || ‘base64').intern,
-
 )
+```
 
-(These defaults differ from those in **OAK.encode**, and **:redundancy** and **:force** are wasteful.)
+(These defaults differ from those in **OAK.encode**, and
+**:redundancy** and **:force** are wasteful.)
 
 Here is a quick parse of some OAK strings.
 
+```
 >> OAK.encode('Hi',format: :none)
 
 => "**oak_3CNN_3475096913_8_F1SU2_Hi_ok**"
@@ -218,17 +222,22 @@ The FRIZZY format encodes all the objects in the graph as a vector, with the ele
 
                           **I1**                      # obj 1 **I**nt **1**
 
-**                            SU1_2                 **# obj 2 **S**tr                                                  #   **U**TF-8
+**                            SU1_2                 **# obj 2 **S**tr                                                  #   **U**TF-8
 
 **                                                  **#   **1** string bytes
 
 **                                                  **#   bytes ‘**2**’
+```
 
 ## option :redundancy => :crc32, :none, or :sha1
 
-The **:redundancy** option selects which algorithm is used to compute the checksum included by OAK.encode.  This checksum lets OAK.decode detect stream errors.The choice of **:redundancy** at encode time is recorded in the 6th character of the OAK string.
+The **:redundancy** option selects which algorithm is used to compute
+the checksum included by OAK.encode.  This checksum lets OAK.decode
+detect stream errors.The choice of **:redundancy** at encode time is
+recorded in the 6th character of the OAK string.
 
-**:redundancy => :crc32**, the default, is flagged as a ‘C’ and is '%d' % Zlib.crc32(str).
+**:redundancy => :crc32**, the default, is flagged as a ‘C’ and is
+'%d' % Zlib.crc32(str).
 
 Advantages:
 
@@ -244,7 +253,8 @@ Disadvantages:
 
 **:redundancy => :none**, is flagged as a ‘N’ and is simply "_0".
 
-I chose to leave an explicit place-holder field even at the cost of 2 useless bytes to keep the number of meta-data field constant.
+I chose to leave an explicit place-holder field even at the cost of 2
+useless bytes to keep the number of meta-data field constant.
 
 Advantages:
 
@@ -462,5 +472,8 @@ My reasons for not using Marshal are:
 
     * Specious: porting a subset of Marshal would be no harder than porting OAK.
 
-To be fair, we use Marshal anyhow, wrapped in OAK, in the Russian Doll caches.  Those store full ActiveRecord model objects.  So any arguments about architectural purity vis-a-vis OAK are really just hype.
+To be fair, we use Marshal anyhow, wrapped in OAK, in the Russian Doll
+caches.  Those store full ActiveRecord model objects.  So any
+arguments about architectural purity vis-a-vis OAK are really just
+hype.
 

@@ -151,11 +151,7 @@ For more details.
 
 ## TODO: packaging
 
-- import design docs here
-  - https://docs.google.com/document/d/10HVWuQzCw1Whc-czDChwsWPEZRLfyPS7F-dkjHWsIs4
-  - https://docs.google.com/document/d/1J7GBEJUPI3UeftJ4C-w3pbBUzk1pU0Sr6zcXufEi7NI
-  - https://docs.google.com/document/d/1SeOO18uqdDtHuB8tZ4-_2sql0Yiaco5J1PWdiu6gmAY
-- edit comments down
+- edit comments for length, content, and format
 - rdoc
 
 ## Possible Future Directions for the Format
