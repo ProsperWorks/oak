@@ -55,22 +55,18 @@ prepared retroactively.
     * Merged to major_2016_04_dragonfruit.
     * Initial implementation. Not integrated or active.
     * Version oak_1
-
 * [https://github.com/ProsperWorks/ALI/pull/1350](https://github.com/ProsperWorks/ALI/pull/1350) **oak-in-summary_accessor**
     * Merged to major_2016_04_dragonfruit.
     * Reworked SummaryAccessor with ENV flag to switch to OAK serialization.
     * Exposure to live data revealed some issues missed in the lab.
-
 * [https://github.com/ProsperWorks/ALI/pull/1631](https://github.com/ProsperWorks/ALI/pull/1631) **oak-remove-json-and-yaml**
     * Merged to major_2016_06_goat.
     * Simplified down to only the one serialization algorithm, "FRIZZY".
     * Version oak_2
-
 * [https://github.com/ProsperWorks/ALI/pull/1618](https://github.com/ProsperWorks/ALI/pull/1618) **fix-oak-utf8**
     * Merged in major_2016_06_goat.
     * Fixed issues uncovered in SummaryAccessor ramp.
     * Version oak_3
-
 * [https://github.com/ProsperWorks/ALI/pull/1655](https://github.com/ProsperWorks/ALI/pull/1655) **volatile_cache_accessor**
     * Merged in major_2016_06_goat.
     * Introduced RedisCache.  Later PRs use RedisCache for
@@ -79,11 +75,9 @@ prepared retroactively.
         * S3 cache (OAK)
         * COMPANY_ID_CACHE (JSON)
     * Commits to OAK for volatile use cases.
-
 * [https://github.com/ProsperWorks/ALI/pull/1757](https://github.com/ProsperWorks/ALI/pull/1757) **oak-woe-2016-06-30**
     * Merged in major_2016_07_hotpocket.
     * Fixed a regexp which had broken some Float parsing.
-
 * [https://github.com/ProsperWorks/ALI/pull/1724](https://github.com/ProsperWorks/ALI/pull/1724) **correspondences-in-s3-fixes**
     * Merged in major_2016_07_hotpocket.
     * Stores Correspondence bodies in S3 as OAK strings.
@@ -100,7 +94,6 @@ OAK string output.  There is no need for an options back channel to
 
 We could encode every OAK string with different options, and
 `OAK.decode` can reverse all of them with no extra info.
-
 ```
 >> OAK.encode('HelloWorld',redundancy: :none)
 => "oak_3NNB_0_23_RjFTVTEwX0hlbGxvV29ybGQ_ok"
@@ -122,12 +115,10 @@ We could encode every OAK string with different options, and
 ```
 
 We use this to defer our choice of time-space tradeoffs until runtime.
-`Caches::RedisCache` in `lib/caches/redis_cache.rb` enshrines this
-pattern by parsing OAK options from the ENV:
-
-# in Caches::RedisCache#_serialize
-
+ALI's `Caches::RedisCache` mechanism enshrines this pattern by parsing
+OAK options from the ENV:
 ```
+# in Caches::RedisCache#_serialize
 OAK.encode(
  pre_obj,
  redundancy:  (ENV["CACHE_OAK_REDUNDANCY_#{name}"] || 'sha1').intern,
@@ -136,12 +127,9 @@ OAK.encode(
  format:      (ENV["CACHE_OAK_FORMAT_#{name}"]     || 'base64').intern,
 )
 ```
-
-(These defaults differ from those in `OAK.encode`, and
-`:redundancy` and `:force` are wasteful.)
+These defaults differ from those in `OAK.encode`.
 
 Here is a quick parse of some OAK strings.
-
 ```
 >> OAK.encode('Hi',format: :none)
 
@@ -192,18 +180,16 @@ detect stream errors.The choice of `:redundancy` at encode time is
 recorded in the 6th character of the OAK string.
 
 `:redundancy => :crc32`, the default, is flagged as a `C` and is
-'%d' % Zlib.crc32(str).
+`'%d' % Zlib.crc32(str)`.
 
 Advantages:
 
 * Encodes in only 12 bytes.
-
 * Plenty good enough for all natural stream errors.
 
 Disadvantages:
 
 * Encodes in 12 whole bytes!
-
 * Easily spoofed: not cryptographically secure. 
 
 `:redundancy => :none`, is flagged as a `N` and is simply `_0`.
@@ -221,12 +207,14 @@ Disadvantages:
 
 * Encodes in 2 whole bytes!
 * OAK will not catch twiddled bits.
-        * All compression algorithms do their own checksumming.
-        * So this is only a disadvantage with `:compression => :none`.
-            * Caution: `:force => false` is default.
-            * So fallback to `:compression => :none` is likely.
-            * So `:compression` is not a substitute for `:redundancy`.
-`:redundancy => :sha1`, is flagged as a `S`.  It is not recommended.
+  * All compression algorithms do their own checksumming.
+  * So this is only a disadvantage with `:compression => :none`.
+    * Caution: `:force => false` is default.
+    * So fallback to `:compression => :none` is likely.
+    * So `:compression` is not a substitute for `:redundancy`.
+
+`:redundancy => :sha1`, is flagged as a `S`.  It is very large and is
+not recommended for most use cases.
 
 Advantages:
 
@@ -244,25 +232,21 @@ algorithm compresses the payload.
 `:compression => :none`, the default, is flagged as a `N`.  No compression.
 
 * No compression or decompression costs.
-
 * Human-readable if the source content is human readable and format is none.
 
 `:compression => :lz4` is flagged as a `4`.  [LZ4](https://github.com/lz4/lz4) is in the [Lempel-Ziv](https://en.wikipedia.org/wiki/LZ77_and_LZ78) family of dictionary-based redundancy eaters which are popular for low-latency online systems
 
 * Low compression costs, low decompression costs.
-
 * Compression ratios in 1.8-2.1 for English.
 
 `:compression => :zlib` is flagged as a `Z`.  [RFC 1951 Zlib ](https://en.wikipedia.org/wiki/DEFLATE)is the widely-used compression used in pkzip, zip, and gzip.  It crunches LZ77 with a follow-on Huffman step.
 
 * Medium compression costs, medium decompression costs.
-
 * Compression ratios around 4.0 for English.
 
 `:compression => :bzip2` is flagged as a `B`.  [Burroughs-Wheeler transform](https://en.wikipedia.org/wiki/Bzip2) with some Huffman, delta, and sparse array encoding thrown in for good measure.
 
 * Higher compression and decompression costs.
-
 * Compression ratios around 5.0 for English.
 
 `:compression => :lzma` is flagged as a `M` uses the [Lempel-Zib_Markov chain algorithm](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Markov_chain_algorithm).  It is an unusual choice for an online system.
@@ -270,21 +254,24 @@ algorithm compresses the payload.
 Advantages:
 
 * Very high compression costs, medium-low decompression costs.
-
 * Compression ratios around 5.2 for English.
 
 `option :force => false, true`
 
-By default, `OAK.encode` will fall back to `:compression => :none` if the compressed string is larger than the source string.
+By default, `OAK.encode` will fall back to `:compression => :none` if
+the compressed string is larger than the source string.
 
 `:force => true` overrides this fail safe.
 
 ## option :format => :base64 or :none
 
-The `:format` option selects the character set used in the main body of the OAK string - the payload part which follows the flags and checksum and before the "_ok" terminator.  The choice of `:redundancy` at encode time is recorded in the 8th character of the OAK string.
+The `:format` option selects the character set used in the main body
+of the OAK string - the payload part which follows the flags and
+checksum and before the `_ok` terminator.  The choice of `:redundancy`
+at encode time is recorded in the 8th character of the OAK string.
 
 `:format => :base64`, the default, is flagged as a `B` and is
-Base64.urlsafe_encode64(str). with the final "===" padding stripped.
+`Base64.urlsafe_encode64(str)` with the final `===` padding stripped.
 
 Advantages:
 
@@ -350,7 +337,7 @@ is lost in translation.
 => false
 ```
 With OAK, vive la différence:
-``
+```
 >> str = 'x' ; OAK.encode([str,str]) == OAK.encode(['x','x'])
 => false
 
@@ -361,12 +348,16 @@ With OAK, vive la différence:
 => "oak_3CNN_2865617390_13_F2A2_1_1SU1_x_ok"
 ```
 
-The JSON format does not support Infinity, -Infinity, or NaN - though
-Ruby's JSON encoder transcodes thes via a nonstandard extension.  YAML
-handles Infinity, -Infinity, or NaN, and also DAGs - but not cycles.
+The JSON format does not support `Infinity`, `-Infinity`, or `NaN` -
+though Ruby's JSON encoder transcodes thes via a nonstandard
+extension.
+
+YAML handles `Infinity`, `-Infinity`, and `NaN`.  YAML also also DAGs
+- but not cycles.
+
 XML is ... XML.  And huge.  And Nokogiri is weird.
 
-Who cares?  These are just Strings.  It's better to treat them as
+Who cares?  These are just strings.  It's better to treat them as
 immutable anyhow, right? What about compound objects like lists or
 hashes?
 
@@ -399,17 +390,26 @@ diverse and surprising.  The right question is, "Can we *prove* that
 we do not need it now or tomorrow?"  With a cycle-aware serializer, I
 don't *need* to prove nonexistence or constrain the future.
 
-What about [Marshal](http://jakegoulding.com/blog/2013/01/15/a-little-dip-into-rubys-marshal-format/)? It handles (almost) all Ruby types including user-defined classes, has no problems with cycles, and is widely available and accepted.
+What about
+[Marshal](http://jakegoulding.com/blog/2013/01/15/a-little-dip-into-rubys-marshal-format/)?
+It handles (almost) all Ruby types including user-defined classes, has
+no problems with cycles, and is widely available and accepted.
 
 My reasons for not using Marshal are:
 
 * Security
     * [https://ruby-doc.org/core-2.2.2/Marshal.html](https://ruby-doc.org/core-2.2.2/Marshal.html)
-    * "By design, ::load can deserialize almost any class loaded into the Ruby process. In many cases this can lead to remote code execution if the Marshal data is loaded from an untrusted source."
-* Marshal can have problems if a user-defined class changes between encoding time and decoding time.
-    * I wanted OAK to refuse to encode objects whose structure it could not guarantee to recover with perfect fidelity.
+    * "By design, `load` can deserialize almost any class loaded into
+      the Ruby process. In many cases this can lead to remote code
+      execution if the Marshal data is loaded from an untrusted
+      source."
+    * Marshal can have problems if a user-defined class changes between
+      encoding time and decoding time.
+    * I wanted OAK to refuse to encode objects whose structure it
+      could not guarantee to recover with perfect fidelity.
 * I have ambitions for language portability with in OAK.
-    * Specious: porting a subset of Marshal would be no harder than porting OAK.
+    * Specious: porting a subset of Marshal would be no harder than
+      porting OAK.
 
 To be fair, we use Marshal anyhow, wrapped in OAK, in the Russian Doll
 caches.  Those store full ActiveRecord model objects.  So any
