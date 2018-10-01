@@ -1,6 +1,9 @@
 ## 0.4.2 (TBD)
 
 - `oak`, `oak.rb` patched to play nicer with bundler
+- Fix exception type bug in ruby >= 2.3 and openssl >= 2.0.0 when
+  parsing some corrupt encrypted data.
+- Updated .travis.yml to update and expand the versions of Ruby covered.
 
 
 ## 0.4.1 (2018-10-01)

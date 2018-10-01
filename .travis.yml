@@ -4,9 +4,11 @@ before_install:
   - gem install bundler -v 1.16.1
 rvm:
   - 2.1.6
-  - 2.2.9
-  - 2.4.3
-  - 2.5.0
+  - 2.2.7
+  - 2.2.10
+  - 2.3.7
+  - 2.4.4
+  - 2.5.1
 script:
   #
   # Run several tests in parallel, and be happy if they are all happy.
