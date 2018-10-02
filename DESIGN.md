@@ -110,7 +110,7 @@ We could encode every OAK string with different options, and
 ```
 
 We use this to defer our choice of time-space tradeoffs until runtime.
-ALI's `Caches::RedisCache` mechanism enshrines this pattern by parsing
+`ALI`'s `Caches::RedisCache` mechanism enshrines this pattern by parsing
 OAK options from the ENV:
 ```
 # in Caches::RedisCache#_serialize
@@ -375,7 +375,7 @@ SystemStackError: stack level too deep
 ```
 The essence of serializing non-tree objects is capturing identity.
 
-Does this matter in ALI?  Honestly, I don't know.  Cycles and DAGs are
+Does this matter in `ALI`?  Honestly, I don't know.  Cycles and DAGs are
 irrelevant for Correspondence bodies.  We do have Summaries which are
 DAGgy on Strings but that is probably irrelevant in all logic.
 
