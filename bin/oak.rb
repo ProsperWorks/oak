@@ -103,143 +103,141 @@ Ruby 2.1.6 on Linux I get Encoding.default_encoding is US-ASCII!
 
 =end
 
-if __FILE__ == $0
-  if OPTS[:self_test]
-    require 'rubydoctest'
-    exit RubyDocTest::Runner.new(File.read(__FILE__), __FILE__).run ? 0 : 1
-  end
-  if OPTS[:key_check]
-    if !OPTS[:key_chain]
-      puts "no --key-chain specified"
+if OPTS[:self_test]
+  require 'rubydoctest'
+  exit RubyDocTest::Runner.new(File.read(__FILE__), __FILE__).run ? 0 : 1
+end
+if OPTS[:key_check]
+  if !OPTS[:key_chain]
+    puts "no --key-chain specified"
+  else
+    keys = oak_opts[:key_chain].keys.keys
+    if 0 == keys.size
+      puts "#{OPTS[:key_chain]}: no keys found"
     else
-      keys = oak_opts[:key_chain].keys.keys
-      if 0 == keys.size
-        puts "#{OPTS[:key_chain]}: no keys found"
-      else
-        puts "#{OPTS[:key_chain]}: found keys: #{keys.join(' ')}"
-      end
+      puts "#{OPTS[:key_chain]}: found keys: #{keys.join(' ')}"
     end
   end
-  if OPTS[:key_generate]
-    STDOUT.puts OAK.encode(OAK.random_key)
+end
+if OPTS[:key_generate]
+  STDOUT.puts OAK.encode(OAK.random_key)
+  exit 0
+end
+if !$stdin.tty?
+  if OPTS[:eigen]
+    prev = STDIN.read
+    puts "input: %d" % prev.size
+    OPTS[:eigen].times do |i|
+      oak   = OAK.encode(prev,oak_opts)
+      psize = prev.size
+      wsize = oak.size
+      ratio = 1.0 * wsize / psize
+      puts "  iter %3d: %4d => %4d ratio %.2f" % [i,psize,wsize,ratio]
+      prev  = oak
+    end
     exit 0
   end
-  if !$stdin.tty?
-    if OPTS[:eigen]
-      prev = STDIN.read
-      puts "input: %d" % prev.size
-      OPTS[:eigen].times do |i|
-        oak   = OAK.encode(prev,oak_opts)
-        psize = prev.size
-        wsize = oak.size
-        ratio = 1.0 * wsize / psize
-        puts "  iter %3d: %4d => %4d ratio %.2f" % [i,psize,wsize,ratio]
-        prev  = oak
-      end
-      exit 0
+  unhappiness = 0
+  case OPTS[:mode]
+  when 'cat'
+    ARGF.each_line.map(&:strip).each do |line|
+      puts line
     end
-    unhappiness = 0
-    case OPTS[:mode]
-    when 'cat'
-      ARGF.each_line.map(&:strip).each do |line|
-        puts line
-      end
-    when 'encode-lines'
-      ARGF.each_line.map(&:strip).each do |line|
-        puts OAK.encode(line,oak_opts)
-      end
-    when 'decode-lines'
-      ARGF.each_line.map(&:strip).each do |line|
-        puts OAK.decode(line,oak_opts)
-      end
-    when 'encode-file'
-      puts OAK.encode(STDIN.read,oak_opts)
-    when 'decode-file'
-      STDOUT.write OAK.decode(STDIN.read.strip,oak_opts)
-    when 'recode-file'
-      puts OAK.encode(OAK.decode(STDIN.read,oak_opts),oak_opts)
-    when 'crazy'
-      #
-      # --mode crazy prints out a sample of OAK strings for various
-      # challenging cases.
-      #
-      cycle_a    = ['cycle_a','TBD']
-      cycle_b    = ['cycle_b',cycle_a]
-      cycle_a[1] = cycle_b
-      dag_c      = ['dag_c']
-      dag_b      = ['dag_b',dag_c]
-      dag_a      = ['dag_a',dag_b,dag_c]
-      [
-        'hello',
-        ['hello'] + ['hello',:hello] * 2,
-        {1=>'a','b'=>2,[]=>3,''=>4,{}=>5,nil=>6},
-        ['x','x','x','x','x','x','x','x','x','x','x','x','x'],
-        ['x'] * 13,
-        cycle_a,
-        dag_a,
-        [1,-123,0.12,-0.123,Float::NAN,-Float::INFINITY,3.14159265358979],
-      ].each do |obj|
-        oak = OAK.encode(
-          obj,
-          redundancy:  :crc32,
-          format:      :none,
-          compression: :none,
-        )
-        puts ""
-        puts "obj:   #{obj}"
-        puts "  oak: #{oak}"
-        begin
-          dec = OAK.decode(oak,oak_opts)
-          if dec != obj
-            if !dec.is_a?(Float) && !enc.is_a?(Float) && !dec.nan? && !enc.nan?
-              unhappiness += 1
-              puts "  BAD: #{dec}"
-            end
-          end
-        rescue OAK::CantTouchThisStringError => ex
-          puts "  BAD: #{ex.message}: #{ex.backtrace_locations[0]}"
-          unhappiness += 1
-        end
-      end
-    when 'tests'
-      [
-        [1,2,3],
-        {:foo=>'foo','foo'=>['x']*10},
-        -1,
-        Float::NAN,
-        nil,
-      ].each do |obj|
-        puts "    #{obj} => ["
-        key_chain = OAK::KeyChain.new(
-          { 'l0ng3r' => OAK::Key.new('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') }
-        )
-        [
-          {redundancy: :none, format: :none,  compression: :none             },
-          {redundancy: :none, format: :base64,compression: :lz4,  force: true},
-          {redundancy: :crc32,format: :base64,compression: :zlib, force: true},
-          {redundancy: :crc32,format: :base64,compression: :bzip2,force: true},
-          {redundancy: :sha1, format: :base64,compression: :lzma, force: true},
-          {key_chain: key_chain,force_oak_4: true,format: :none,             },
-          {key_chain: key_chain,force_oak_4: true,                           },
-          {key_chain: key_chain,key: 'l0ng3r',                               },
-        ].each do |opts|
-          oak = OAK.encode(obj,opts)
-          puts "      '#{oak}',"
-          dec = OAK.decode(oak,opts)
-          if dec != obj
-            if !dec.is_a?(Float) && !enc.is_a?(Float) && !dec.nan? && !enc.nan?
-              unhappiness += 1
-            end
+  when 'encode-lines'
+    ARGF.each_line.map(&:strip).each do |line|
+      puts OAK.encode(line,oak_opts)
+    end
+  when 'decode-lines'
+    ARGF.each_line.map(&:strip).each do |line|
+      puts OAK.decode(line,oak_opts)
+    end
+  when 'encode-file'
+    puts OAK.encode(STDIN.read,oak_opts)
+  when 'decode-file'
+    STDOUT.write OAK.decode(STDIN.read.strip,oak_opts)
+  when 'recode-file'
+    puts OAK.encode(OAK.decode(STDIN.read,oak_opts),oak_opts)
+  when 'crazy'
+    #
+    # --mode crazy prints out a sample of OAK strings for various
+    # challenging cases.
+    #
+    cycle_a    = ['cycle_a','TBD']
+    cycle_b    = ['cycle_b',cycle_a]
+    cycle_a[1] = cycle_b
+    dag_c      = ['dag_c']
+    dag_b      = ['dag_b',dag_c]
+    dag_a      = ['dag_a',dag_b,dag_c]
+    [
+      'hello',
+      ['hello'] + ['hello',:hello] * 2,
+      {1=>'a','b'=>2,[]=>3,''=>4,{}=>5,nil=>6},
+      ['x','x','x','x','x','x','x','x','x','x','x','x','x'],
+      ['x'] * 13,
+      cycle_a,
+      dag_a,
+      [1,-123,0.12,-0.123,Float::NAN,-Float::INFINITY,3.14159265358979],
+    ].each do |obj|
+      oak = OAK.encode(
+        obj,
+        redundancy:  :crc32,
+        format:      :none,
+        compression: :none,
+      )
+      puts ""
+      puts "obj:   #{obj}"
+      puts "  oak: #{oak}"
+      begin
+        dec = OAK.decode(oak,oak_opts)
+        if dec != obj
+          if !dec.is_a?(Float) && !enc.is_a?(Float) && !dec.nan? && !enc.nan?
+            unhappiness += 1
+            puts "  BAD: #{dec}"
           end
         end
-        puts "    ],"
+      rescue OAK::CantTouchThisStringError => ex
+        puts "  BAD: #{ex.message}: #{ex.backtrace_locations[0]}"
+        unhappiness += 1
       end
-    else
-      Optimist::die :mode, "bogus mode #{OPTS[:mode]}"
     end
-    if unhappiness > 0
-      puts "unhappiness: #{unhappiness}"
+  when 'tests'
+    [
+      [1,2,3],
+      {:foo=>'foo','foo'=>['x']*10},
+      -1,
+      Float::NAN,
+      nil,
+    ].each do |obj|
+      puts "    #{obj} => ["
+      key_chain = OAK::KeyChain.new(
+        { 'l0ng3r' => OAK::Key.new('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') }
+      )
+      [
+        {redundancy: :none, format: :none,  compression: :none             },
+        {redundancy: :none, format: :base64,compression: :lz4,  force: true},
+        {redundancy: :crc32,format: :base64,compression: :zlib, force: true},
+        {redundancy: :crc32,format: :base64,compression: :bzip2,force: true},
+        {redundancy: :sha1, format: :base64,compression: :lzma, force: true},
+        {key_chain: key_chain,force_oak_4: true,format: :none,             },
+        {key_chain: key_chain,force_oak_4: true,                           },
+        {key_chain: key_chain,key: 'l0ng3r',                               },
+      ].each do |opts|
+        oak = OAK.encode(obj,opts)
+        puts "      '#{oak}',"
+        dec = OAK.decode(oak,opts)
+        if dec != obj
+          if !dec.is_a?(Float) && !enc.is_a?(Float) && !dec.nan? && !enc.nan?
+            unhappiness += 1
+          end
+        end
+      end
+      puts "    ],"
     end
-    exit unhappiness
+  else
+    Optimist::die :mode, "bogus mode #{OPTS[:mode]}"
   end
+  if unhappiness > 0
+    puts "unhappiness: #{unhappiness}"
+  end
+  exit unhappiness
 end

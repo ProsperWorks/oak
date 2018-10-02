@@ -1,3 +1,12 @@
+## 0.4.2 (TBD)
+
+- `oak`, `oak.rb` patched to play nicer with bundler
+- Fix exception type bug in ruby >= 2.3 and openssl >= 2.0.0 when
+  parsing some corrupt encrypted data.
+- Updated .travis.yml to update and expand the versions of Ruby covered.
+- Migrate DESIGN.md and ENCRYPTION.md in from Google Docs.
+
+
 ## 0.4.1 (2018-10-01)
 
 - `oak`, `oak.rb` published as executables from gem.
@@ -8,7 +17,7 @@
 
 ## 0.4.0 (2018-09-24)
 
-- First export from ProsperWorks/ALI.
+- First export from [ProsperWorks/ALI](https://github.com/ProsperWorks/ALI).
 - First conversion to gem.
 - Not open (yet).
 - OAK3 emitted by default.

@@ -18,7 +18,7 @@ like String, Symbol, Integer, Float, Hash, and Array.  OAK
 serialization supports cyclical structures and distinguishes between
 String and Symbol, but does not support user-defined types.
 
-In ProsperWorks/ALI, we use OAK at Copper, OAK has found use cases in:
+In `ALI` (copper.com's primary web service), OAK has found use cases in:
 
   - Volatile Redis cache entries, where dynamic control of time-space
     tradeoffs shaves down hosting costs.
@@ -151,11 +151,7 @@ For more details.
 
 ## TODO: packaging
 
-- import design docs here
-  - https://docs.google.com/document/d/10HVWuQzCw1Whc-czDChwsWPEZRLfyPS7F-dkjHWsIs4
-  - https://docs.google.com/document/d/1J7GBEJUPI3UeftJ4C-w3pbBUzk1pU0Sr6zcXufEi7NI
-  - https://docs.google.com/document/d/1SeOO18uqdDtHuB8tZ4-_2sql0Yiaco5J1PWdiu6gmAY
-- edit comments down
+- edit comments for length, content, and format
 - rdoc
 
 ## Possible Future Directions for the Format

@@ -266,10 +266,15 @@ than hypothesis.
 
 ## Encryption Choices
 
-Encryption is the first extension of OAK since it went live in
-ProsperWorks's Redis layer on 2016-06-02 and in the S3 Correspondence
-bodies since 2016-07-06.  There had been only Rubocop updates and nary
-a bugfix since 2016-07-01.
+OAK has been live in `ALI` (copper.com's primary web service) in our
+Redis cache layer on 2016-06-02 and for archiving correspondence
+bodies in S3 on 2016-07-06.
+
+There had been only Rubocop updates and nary a bugfix since
+2016-07-01.
+
+Encryption is the first extension since OAK first went live.
+
 
 ### Encryption-in-OAK Design Decisions (see arch doc for discussion):
 
