@@ -19,17 +19,12 @@ The main value proposition for OAK is operational flexibility.  OAK
 leds you defer choices between compression, checksumming, and 7-bit
 cleanliness algorithms until after a system is live and under load.
 
-As of 2017-09-13, OAK is used by ALI for volatile caches in Redis, and
-for durable Correspondence bodies in S3.
+As of 2017-09-13, OAK is used by `ALI` (copper.com's primary web
+service) for volatile caches in Redis, durable archives in S3, and for
+7-bit clean encoding of complex configuration data.
 
-Author:
-- [jhw@prosperworks.com](mailto:jhw@prosperworks.com)
-
-Advisors:
-- [marshall@prosperworks.com](mailto:marshall@prosperworks.com)
-- [gerald@prosperworks.com](mailto:gerald@prosperworks.com)
-- [kelly@prosperworks.com](mailto:kelly@prosperworks.com)
-- [neil@prosperworks.com](mailto:neil@prosperworks.com)
+Author: [JHW](https://github.com/jhwillett)
+Advisors: Marshall, Gerald, Kelly, Neil
 
 Here is a sneak preview of some OAK strings:
 ```
@@ -351,8 +346,8 @@ The JSON format does not support `Infinity`, `-Infinity`, or `NaN` -
 though Ruby's JSON encoder transcodes thes via a nonstandard
 extension.
 
-YAML handles `Infinity`, `-Infinity`, and `NaN`.  YAML also also DAGs
-- but not cycles.
+YAML handles `Infinity`, `-Infinity`, and `NaN`.  YAML also handles
+DAGs - but not cycles.
 
 XML is ... XML.  And huge.  And Nokogiri is weird.
 
@@ -410,7 +405,6 @@ My reasons for not using Marshal are:
     * Specious: porting a subset of Marshal would be no harder than
       porting OAK.
 
-To be fair, we use Marshal anyhow, wrapped in OAK, in the Russian Doll
-caches.  Those store full ActiveRecord model objects.  So any
-arguments about architectural purity vis-a-vis OAK are really just
-hype.
+To be fair, we use Marshal anyhow, wrapped in OAK, in our cache layers
+which store full ActiveRecord model objects.  So any arguments about
+architectural purity vis-a-vis OAK are part hype.

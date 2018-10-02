@@ -19,13 +19,8 @@ encryption to see that my plan was off track.
 In Q3 2018 I am updating and simplifying that plan to to support
 encryption of secrets.
 
-Author:
-- [jhw@prosperworks.com](mailto:jhw@prosperworks.com)
-
-Advisors:
-- [isaac@prosperworks.com](mailto:isaac@prosperworks.com)
-- [rrastogi@prosperworks.com](mailto:rrastogi@prosperworks.com)
-- [clake@prosperworks.com](mailto:clake@prosperworks.com)
+Author: [JHW](https://github.com/jhwillett)
+Advisors: Isaac, Rishav, Chris L.
 
 Things get tricky with symmetric encryption. The _identity_ of our
 encryption keys must be communicated from `OAK.encode` to
@@ -185,8 +180,8 @@ security.
 Also, today I see no point in supporting anything other than AES.  All
 of AES-128, AES-192, and AES-256 are probably adequate for our needs,
 but if we support just AES-256 then we don't have to answer any thorny
-questions.  There too much securit downside in letting the caller pick
-any old block cipher or mode of operation which is supported by
+questions.  There too much security downside in letting the caller
+pick any old block cipher or mode of operation which is supported by
 OpenSSL.  This outweighs any ambition to future-proof OAK by offering
 open-ended support.
 
