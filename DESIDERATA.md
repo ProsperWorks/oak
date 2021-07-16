@@ -290,7 +290,8 @@ Encryption is the first extension since OAK first went live.
   - Athenticates all headers and the encrypted stream.
 - Key rotation is supported.
   - Via an ENV-specified key chain.
-  - Can hold multiple master keys.
+  - One designated key used for new writes.
+  - Multiple read keys will be honored during reencryption with a new write key.
 
 ### Encryption-in-OAK Backward Compatibility
 

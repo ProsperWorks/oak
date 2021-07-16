@@ -1,4 +1,9 @@
-## 0.4.2 (TBD)
+## 0.4.3 (unreleased)
+
+- Documents updated to more sensitive language, except where quoted
+  from external reference.
+
+## 0.4.2 (2018-10-02)
 
 - `oak`, `oak.rb` patched to play nicer with bundler
 - Fix exception type bug in ruby >= 2.3 and openssl >= 2.0.0 when
