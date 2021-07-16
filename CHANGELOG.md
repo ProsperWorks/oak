@@ -1,7 +1,7 @@
 ## 0.4.3 (unreleased)
 
-- Documents updated to use more sensitive language, except where quoting
-  external references.
+- Documents updated to more sensitive language, except where quoted
+  from external reference.
 
 ## 0.4.2 (2018-10-02)
 
